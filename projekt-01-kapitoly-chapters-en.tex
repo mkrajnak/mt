@@ -1,0 +1,302 @@
+% This file should be replaced with your file with an thesis content.
+%=========================================================================
+% Authors: Michal Bidlo, Bohuslav Křena, Jaroslav Dytrych, Petr Veigend and Adam Herout 2019
+
+\lstdefinelanguage{Gherkin}{
+	morekeywords = {
+		Given,
+		When,
+		Then,
+		And,
+		Scenario,
+		Feature,
+		But,
+		Background,
+		Scenario Outline,
+		Examples
+	},
+	sensitive=true,
+	morecomment=[l]{\#},
+	morestring=[b]",
+	morestring=[b]'
+}
+
+\chapter{Introduction}
+Majority of today's software applications feature a graphical user interface(GUI). The term GUI application or GUI software is used for an application that uses GUI as a primary interface for interaction, also called reactive systems. The visible GUI structures are made from the components, these components accept sequences of user events that alter the state of the software. The modification of state may or may not include a change to the visible GUI itself. 
+
+The testing of GUI software involves executing events belonging to GUI components and monitoring resulting changes to the program state. GUI test cases consist of event sequences as an input and some indication of a program's state. An indicator can be GUI state, memory state, error log, output log or any other indicator of runtime application state. GUI testing represents a form of system-level testing for GUI software. GUI test cases actually tests much more than the code only associated with GUI, as the events execute underlying non-GUI code. In cases where an application has no non-GUI interface, the GUI testing is the only possible form of system-level testing. This makes GUI testing a critical part of testing for any GUI software.
+
+The size and complexity of modern GUIs, in terms of components and events that may be executed on them, exceed the practical limits of exhaustive and analytical approaches to testing. The number of possible test cases for GUI increases exponentially with the number of events per test case.\cite{NguyenBao2014Gait}
+
+The goal of this work is to design and implement a tool for generating tests for GNOME desktop applications using AT-SPI metadata created as a by-product of an architecture supporting assistive technologies.
+
+The first chapter is dedicated to methods and practices for testing graphical user interfaces. From advantages and disadvantages of the random input testing and manual testing methods to various tools used for a development of automated test cases based on image recognition and record and replay technique. Further discussion is dedicated to a technique named Model-based testing. The technique is presented with approaches used for automated test generation. 
+
+The next chapter is focused on the architecture of accessibility technology for GTK3/GNOME applications, including libraries, tools and applications for debugging. Further analysis contains description of accessible objects and their properties. A set of certain properties describes a state of an application, the state can be changed through various actions executable on accessible objects. After the initial analysis, the focus will be placed on evaluation of accessibility and its usage for designing automated test cases. Limitations and encountered problems are discussed with proposition of additional technologies that should provide additional level of verification. Namely, an image matching algorithms provided by an open source library OpenCV and Optical Character Recognition method designed for extraction of a text from images.
+
+Finally, the proposed solution is being discussed. Starting with the extraction of actions and states from a running application with enabled assistive technology to the process of generation of test case files, which will be prepared to be executed repeatedly. Methods for Code coverage analysis will be discussed as well. 
+
+
+
+\chapter{Testing Graphical User Interfaces}
+Graphical user interface(GUI) is an interface that makes advantage of the computer's graphics capabilities to make software easier to use.\cite{guidefinition} Graphical applications are developed using sets of windows and widgets. A widget represents a graphical element describing certain behaviour and functionality. User interaction with widgets is generating various events allowing to perform tasks in different ways and therefore achieving the same goal. Despite the fact that they improve usability and flexibility, they also represent a challenge for software testing as testers have to decide whether to check all sequences of events or only a subset. The effort required to test the GUIs can be reduced with automated software testing. Even though there was a significant progress made in automated testing tools over the last decade, manual testing is still the most common technique in practice. However, with a proper automated GUI testing process, more test cases can be executed regularly and more faults can be found within less time.\cite{patternbasedtesting} Automation and CI-CD system play essential role in regression testing, especially in test development phase, when software changes are more frequent. Generally, building GUI test cases involves selecting sequences of GUI events and describing the expected state of the program after event execution.\cite{NguyenBao2014Gait}
+
+Next several sections are dedicated to various testing techniques used to test GUIs. Variations of both manual and automated testing are discussed, followed by examples of tools using them.  Throughout the chapter a tested application will be referred to as a system under test(SUT).
+
+
+\section{Random Input Testing}
+The Random input testing technique is also referred to as stochastic testing or monkey testing. The term monkey is mentioned in any form of automated testing performed without any user bias. This method distinguishes 3 types of monkeys testing the application by generating random sequences of events from both a keyboard and a mouse. Dumb monkeys do not have any knowledge about the system, nor its state and they are not aware which actions are legal or illegal. The downsize is that they cannot recognize a failure when they encounter one. Their only goal is to crash the SUT. Other group, referred to as semismart monkeys, can recognize a bug when they see one. The last group are smart monkeys, who have certain knowledge about the application they are testing, obtained from a state table or a model of SUT. On the other hand, smart monkeys are the most expensive to develop. Despite the fact that a random testing tool has a weak coverage, Microsoft has reported that 10-20\% bugs in their software were discovered by a  random input testing method.\cite{nyman}
+% TODO fuzzy testing
+
+\section{Manual Testing}
+In general, high-level Graphical User Interface (GUI) and acceptance tests are being performed manually. Those practices are often inefficient, error prone and tedious, especially when tests are pushed and executed in a hurry during late development stages. Manual tests are often pre-defined sets of steps performed on high level of system abstraction to validate system against required specification. However, a software is prone to changes and therefore, the software needs to be tested regularly against regressions. This leads to an excessive costs, since testers have to continuously re-execute test plans throughout development stages.\cite{guitesting}
+
+\section{Record/Replay and Scripting Tools}
+To mitigate mentioned concerns and increase the quality of a software, an automated testing has been proposed as a solution. Considerable amount of work has been devoted to high-level test automation, resulting in Record and Replay techniques. Tools are  continuously recording the coordinates and properties of GUI components during manual user interaction. Obtained recordings can be played back to emulate user interaction and validate the correct state of system during the regression testing. These techniques have also certain limitations, which is typically sensitivity to GUI layout changes and code changes. The changes are forcing testers to repeat the recording processes and therefore, they cause additional costs by maintaining automated tests.\cite{guitesting} 
+
+Example of this category of tools is the open source project GNU Xnee. The project consist of library and two applications. Test automation is one of the several use cases for this project. However, the project is limited to X11 display environments.\cite{xnee}
+
+Similar approach for testing is presented by Scrip-based frameworks. These frameworks provide scripting languages to control the GUI. Instead of performing tests manually, testers are writing scrips to automatically interact with the GUI. Scripts contain some assertions to check whether the application executed sequence of events correctly. Violations of assertions during the test results in test case failure. These tools are widely used across the industry, examples of such tools include JFCUnit, Selenium WebDriver, Robotium, Abbot, and SOAtest.\cite{NguyenBao2014Gait}
+
+\section{Random-walk Tools}
+Unlike previously mentioned script-based and capture/replay tools, random-walk tools do not generate test cases. They just randomly walk through the GUI and randomly execute all events they encounter. These tools are easy to use and may find bugs by using unexpected combinations of events, on the contrary, they are able to reveal only specific tool-supported error events(e.g., crashes, timeouts, permission errors). Tools using this technique are Android Monkey\footnote{https://developer.android.com/studio/test/monkey} and GUIdancer\footnote{https://testing.bredex.de/}.
+
+\section{Solutions Based on Image Recognition}
+This category of solutions is often being referred to as Visual GUI Testing. It is an emerging technique combining scripting languages with an image recognition. The image recognition allows to test various systems regardless of their implementation, operating systems or even platform. Tools are providing support for emulating user interaction with the bitmap components(images, buttons) shown to a user on the screen. The biggest limitation of solutions based on the image recognition is that they are not suitable for highly animated GUIs.\cite{guitesting}. There is also a considerable amount of work required for test maintenance, mostly caused by a design changes of widgets throughout the development.   
+
+There are several examples, including the open source tool Sikuli and commercial tool JAutomate. Trivial automation of GUIs via image matching algorithm can be achieved with a Python module named Xpresser. The tool works with a directory of images containing cropped images of widgets. Once the image matching algorithm identifies a location of cropped image on the screen, an intended action can be performed.\cite{xpresser} Xpresser is mostly used for building automated test cases for Linux distribution Ubuntu.
+
+\section{Model-based Testing}
+Model-based testing(MBT) is a software testing technique where test cases are generated from a model that describes functional aspects of the SUT. It allows checking the conformity between the implementation and the model of the SUT, with more systematic and automatic approach in the testing process. The test generation phase is based on algorithm that traverses the model and produce test cases suitable for automatic execution.\cite{embedded}
+
+\subsection{Existing solutions}
+TEMA toolset is a MBT framework developed for smartphone applications. Testers have to manually create two-tier model consisting of two state machines, called action and keyword machines. Those machines represent the GUI at design and implementation levels. The method generates design-level test cases by traversing the action machine, afterwards the keyword machine is used to transform design test cases in the executable ones.\cite{TEMA}
+
+Another approach was introduced GUITAR\cite{NguyenBao2014Gait} framework for automated GUI testing. GUITAR can be divided to the following parts:
+\begin{enumerate}
+    \item GUI reverse engineering
+    \item automated test case generation
+    \item automated execution of test cases
+    \item support for platform-specific customization
+    \item support for addition of new algorithms as plugins
+    \item support for integration into other test harnesses and quality assurance workflows
+\end{enumerate}
+
+The first step contains a reverse engineering process. A structural GUI model of an application under test is extracted from the run-time state of the application. This process involves automatic execution of application, where the tool called Ripper is used to discover as much as possible about the application. The application's window and widgets are discovered in depth-first manner. The Ripper extracts properties of widgets such as position, color, size and enabled status, followed by information about events and results of event execution. The depth-first traversal terminates when all GUI windows are covered. Problem with this heuristic is that it would hypothetically contain an infinite number of ways to interact with non-trivial GUI application. At the end of the process, the Ripper stores the extracted structural information about the GUI in a data structure called GUI Tree, in XML format.
+
+To complete the reverse engineering process, a tool called Graph Converter provides a platform-independent framework to convert the GUI Tree model into a graph, representing relationships between events in the GUI of the application. The results is an Event-flow Graph used for test case generation.
+An EFG is a directed graph representing all possible event interactions on a GUI. Each node represents a GUI event. An edge from node \textit{v} to node \textit{w} represents a \verb|follows| relationship between \textit{v} and \textit{w}, indicating that event \textit{w} can be performed immediately after event \textit{v}.  An EFG is analogous to a control-flow graph, in which vertices represent program statements and edges represent execution flows between the statements.
+
+Then in step 3, test cases are automatically generated based on the EFG. Therefore, the GUI test generation problem is reduced to a problem of graph traversal. Therefore, any graph traversal algorithm can be used for test generation. 
+
+\subsection{Other GUI model representations}
+
+Other than the EFG approach is labeled state transition systems, action words and keywords with the goal to describe a transition model as the Labeled Transition System(LTS). The LTS consists of a set of states and a set of transitions among those states. Action words describe user events with a high level of abstraction and keywords correspond to key presses and menu navigation. The goal is to provide abstract tools, so test cases can be designed even before the system implementation. 
+
+One of the most used solutions for designing models are Finite state machines. This approach is also solving certain limitation of EFG approach. The EFGs are not able to model certain scenarios where GUI objects are modified dynamically. A case where the visibility of GUI object depends on another object's state is a good example. Additionally, state-charts models can be used for both modeling and generation of test cases for GUIs.\cite{patternbasedtesting}
+
+
+\chapter{Accessibility Architecture}
+Accessibility in general is a technology that helps people with disabilities to participate in essential life activities. Considering the accessibility as a part of GNOME desktop, it includes libraries and development tools allowing users with disabilities to use other options of interaction with GNOME desktop environment. Those options includes voice interfaces, screen readers and other alternative input devices.\cite{gnomeADG}
+\section{The Accessibility Toolkit (ATK)}
+Assistive technologies are receiving information from the Accessibility toolkit (ATK), which offers built-in APIs for all GNOME widgets. ATK provides a set of interfaces which are required to be implemented by GUI components. Therefore, assistive technologies are able to automatically read most of the labels on screen without any extra efforts made by developers. The interfaces are toolkit-independent, meaning that their implementation could be written for many widgets, including widgets from frameworks such as GTK3\footnote{https://www.gtk.org/} and Qt\footnote{https://www.qt.io/}.
+\section{GNOME Accessibility Implementation Library (GAIL)}
+Majority of GNOME applications are written in GTK3 framework. The framework provides dynamically loadable module named GAIL implementing ATK interfaces for all GTK3 widgets. Once the module is loaded at runtime, the application is fully capable to cooperate with ATK without any further modifications.
+GNOME desktop does not load accessibility support libraries by default, it has to be enabled by setting a special \texttt{gsettings} key, which can be achieved either by \texttt{dconf}\footnote{https://wiki.gnome.org/Projects/dconf} editor or via \texttt{gsettings} command line utility using a terminal application:
+% 
+\begin{lstlisting}[xleftmargin=3.5ex,caption={Enabling accessibility via gsettings command},label={gsettings}]
+$ gsettings get org.gnome.desktop.interface toolkit-accessibility true
+\end{lstlisting}
+\begin{verbatim}
+   
+\end{verbatim}
+Additional configurations may be required for applications written in other frameworks such as QT or Java. Furthermore, implementations of other assitive technologies might be too application specific or use various techniques like OS event snooping etc. Compared to GNOME Desktop, all information required by assistive technologies (AT) are passed from GNOME Accessibility Framework to a toolkit-independent Service Provider Interface (SPI). The SPI is a key component providing stable and consistent API for screen readers, magnifiers, etc. Accessibility support is relying on per-toolkit implementation (GTK3, QT, Java) and its APIs exported through relevant bridges to unified AT-SPI interface as described on Figure \ref{ATSPI_architecture}.
+
+% Make sure that every image is referenced at lease once with proper positioning
+\begin{figure}[hbt]
+	\centering
+	\includegraphics[width=1\textwidth]{obrazky-figures/GNOME_desktop_Accessibility.png}
+	\caption{GNOME Accessibility Architecture overview\cite{gnomeADG}}
+	\label{ATSPI_architecture}
+\end{figure}
+
+The widget is accessible, if a developer uses any GTK3/GNOME widget and follows the general accessibility guidelines\footnote{https://developer.gnome.org/accessibility-devel-guide/stable/gad-coding-guidelines.html.en} with properly implemented ATK interfaces. Considering that the stock GTK3/GNOME toolkit widgets have implementations of these interfaces provided, new widgets will inherit the functionality and gain suitable accessibility support as well. The default implementation of ATK interfaces might be altered by applications, as developers can enrich their descriptions of widgets and improve the overall user experience in special cases, e.g. when widget is used for some less expected purposes or the default description is too general. The ATK provides set of functions to achieve this along with the ability to make any custom component accessible\footnote{https://developer.gnome.org/accessibility-devel-guide/stable/gad-custom.html.en}.\cite{accessibleWidgets}
+
+\newpage
+\section{Library pyatspi}\label{pyatspi}
+Package pyataspi is a Python wrapper around AT-SPI's C implementation, which loads the Accessibility typelib and imports the classes implementing AT-SPI interfaces.\cite{pyatspi}
+
+AT-SPI exposes applications as a tree of widgets, starting with a root element where every sub-element represent one running application on the GNOME desktop. Each application has zero or more child elements, each child is distinguishable by its position in the tree and several object properties. Some of these properties are encapsulated inside the accessible object and their values must be obtained through corresponding methods, so called getters. Small set of properties are described in the following list:
+\begin{itemize}
+    \item \textit{name} - string value, for most widgets contains text identical with a text label visible on widget
+    \item \textit{roleName} - string value, specifies the widget type, available via \textit{getRoleName} method
+    \item \textit{childCount} - integer value, a number of sub-elements 
+    \item \textit{actions} - list of strings, contains available actions which can be performed by the ATK
+    \item \textit{visible} - boolean value, indicated that object is visible to the user
+    \item \textit{showing} - boolean value, object is rendered
+    \item \textit{text} - string value, mostly used in input fields or widgets containing plenty of text
+    \item \textit{description} - string value, contains special widget description for users
+    \item \textit{position} - integer tuple, x, y coordinates on the screen (might be related to other component)
+    \item \textit{size} - integer tuple, shows height and width of a widget
+\end{itemize}
+
+Additionally, elements can be linked together in other useful ways (except parent-child relationship) where labels are linked with widgets like text fields, check boxes, combo boxes etc. These labels are making widgets easier to find or interact with. Other advantageous properties like \textit{showing} or \textit{visible} can be used to decide whether elements are hidden from the active screen area, thus they are not available for interaction. Specifying a \textit{roleName} allows categorization of widgets which is useful for identification of category specific methods, e.g. selecting values in radio buttons, selecting options in combo boxes or a simple click method on push buttons. Access to this functionality is focused in a singleton object named \textit{registry} that provides services for subscribing to specific events and generating events from mouse or keyboard on demand.
+
+Library pyatspi is an open source project available for most of Linux distributions via distro specific packaging services (package named \textit{python3-atspi}) or is available to be built from its sources\footnote{https://gitlab.gnome.org/GNOME/pyatspi2}.
+
+\section{Exploring and Debugging the Accesibility}
+Currently, there are several tools available for exploration and debugging accessibility features not only on GNOME desktop. 
+\subsection{Library dogtail}
+dogtail is an open source GUI test framework written in Python implemented as a library around pyatspi. Several modules implements higher level of API to simplify work and interaction with accessible objects during test development. The tool offers less complex functionality, containing tree view of objects with their basic attributes\cite{dogtail_doc}. Package dogtail also includes a GUI tool Sniff, similar to the Accerciser application described in the next section. The most important dogtail modules are described in several next paragraphs.
+
+The module \textit{tree} contains the most important class \textit{Node}, instances of the class represent elements of the desktop user interface. All elements are gathered to tree structure, representing all applications starting with the root element (desktop). The class is implemented as a mixin for Accessible and various Accessible interfaces and is an important unit for it's subclasses, namely \textit{Application}, \textit{Root} and \textit{Window}. The Node class also implements methods used for search of nodes in the tree based on certain criteria. A lambda expression can be passed to methods \textit{findChild} and \textit{findChildren} as argument named \textit{pred}. The lambda expression can contain any properties that uniquely identify nodes, including \textit{name}, \textit{roleName},  \textit{showing} and \textit{visible}. The class also contains action methods that can be performed on nodes without importing other action modules. Verification and identification of shown nodes are easier thanks to method named \textit{blink}. Once the method is called on a certain element, the element is highlighted on the screen for several seconds. This functionality is also part of the Sniff tool where element is highlighted after it is selected in the displayed tree.
+
+The module \textit{dump} contains only one method with the same name, the method return a string describing the tree of nodes which is useful for python/ipython console debugging.
+
+Finally, the module \textit{rawinput} contains implementation required for generating events from both keyboard and mouse. More complex events simulating keyboard shortcuts, mouse gestures and drag and drop operations are implemented as well.  
+
+
+ \begin{figure}[hbt]
+	\centering
+	\includegraphics[width=1\textwidth]{obrazky-figures/sniff.png}
+	\caption{Sniff utility highlighting icon area in Nautilus File Manager, Screenshot taken from Red Hat Enterprise Linux 8.2}
+	\label{sniff}
+\end{figure}
+
+ Testing Dogtail has proven availability for many Linux distributions through their package repositories, specifically Fedora 32, Red Hat Enterprise Linux 8.2 and Manjaro 18 with GNOME 3.34 (Archlinux). It is also available as a Pypi Python package and according to information in it's official Gitlab repository should work not only for GTK3 application but also for application written in QT and KDE. 
+ 
+ Dogtail testing reveals also some minor problems which might occur during the test development. To be more specific, there are know cases in which the coordinates of a node were not reported correctly. Most of the items labelled with a \textit{roleName} panel and list list box are missing their \textit{name} labels. Those items are not as important for users as they don't contain any visible text, nor an action to interact with. The purpose of those items is to serve as a wrapper for other elements and group them together in an element tree. Further testing discovered non-accessible menu\footnote{https://bugzilla.redhat.com/1723836} or nameless menu button\footnote{https://wiki.gnome.org/Apps/DiskUsageAnalyzer}. So once an action needs to be dispatched on such element, the identification has to be done either through a parent element or a sibling element. Additionally, execution of a mouse event will require an offset calculation to specify the correct element position on the screen.
+ 
+ So to conclude this chapter, dogtail is powerful tool for development of automated test cases in GNOME 3 environment. On the other hand, it contains discussed limitations and flaws. Those limitations mustn't come from the dogtail itself, they are either accessibility bugs or bugs in GTK3 framework (non-accessible menu).  
+
+\subsection{Accerciser}
+Accerciser is an interactive accessibility explorer developed in Python. It provides well-arranged graphical frontend for AT-SPI library, hence it can inspect, examine and interact with widgets and also allows developers to verify that their applications are providing correct information to assistive technologies and automated testing frameworks. The default interface has three sections: A tree view with the entire desktop accessible hierarchy and two optional plugin areas. Accerciser has an extensible, plugin-based architecture, most of the features available by default are provided by plugins discussed in next several paragraphs.
+
+The Interface Viewer plugin is an explorer of AT-SPI interfaces provided by each accessible widget of a target application. Once an item is selected, its interfaces are shown with a list of sensitive methods, so all methods are executable. The list contains methods for interaction with an object and various methods for obtaining more information about the object. Accerciser allows to explore the following interfaces:
+    \begin{itemize}
+        \item Accessible - shows child count (number of child widgets), description, states, relations and other attributes
+        \item Application - if implemented (not mandatory), it shows application ID, toolkit and version
+        \item Component - shows item's absolute position with respect to the desktop coordinate system, relative position with respect to the  window coordinate system, size, layer type, MDI-Z-order indicating the stacking order of the component and alpha
+        \item Document - shows document attributes and locale information
+        \item Hypertext - shows a list with all item's hypertext links,  including name, URI, start index and end index
+        \item Image - shows item's description, size, position and locale
+        \item Selection - shows all selectable child items of the selected item,
+        \item Streamable Content - shows selected item's content type and their corresponding URIs
+        \item Table - shows item's caption, rows, columns, number of selected rows, number of selected columns and for selected cell, it shows  it's row's and column's header extents  
+        \item Text - shows selected item's text content, that can be editable with attributes offset, justification  and possibility to show CSS formatting as well
+        \item Value shows item's value, minimum value, maximum value, minimal increment for a value 
+    \end{itemize}
+    
+The AT-SPI Validator plugin applies tests to verify the accessibility of a target application, the validator will generate the report of the selected item and all its descendant widgets in the tree hierarchy.
+
+The next plugin is the Event Monitor, which displays AT-SPI emitted events including the filter for several different AT-SPI event classes. The plugin has the ability to monitor only events sourced from selected application or selected accessible (widget). Each event record contains the source and the application.
+
+The Quict Select plugin provides global hotkeys for quickly selecting accessible widgets in Accerciser's Application Tree View, selected widget is highlighted in the target application.
+
+The API Browser plugin shows interfaces, methods and attributes available on each accessible widgets of a target application, by default it shows only public methods and properties, private methods and properties are hidden until checkbox \textit{Hide Private Attributes} is unchecked.
+ 
+Finally, plugin IPython Console provides full, interactive Python shell with access to selected accessible widgets of a target application as an pyatspi objects. Any object selected in the the tree view is available in the IPython Console under the symbol \textit{acc}, so the plugin provides an easy way to test and debug code used in test cases.    
+
+\begin{figure}[hbt]
+	\centering
+	\includegraphics[width=1\textwidth]{obrazky-figures/accerciser.png}
+	\caption{Accerciser default configuration, Screenshot taken on Manjaro Linux with GNOME 3.34}
+	\label{Accerciser}
+\end{figure}
+
+
+\section{Covering Limitations of Accessibility and Verification}
+As discussed in aforementioned sections, information provided by accessibility is not flawless, therefore next couple chapters are dedicated to exploration of technologies that might be used to support the accessibility in such cases.
+
+\subsection{OpenCV and Image Matching Techniques}
+OpenCV or Open Source Computer Vision Library is a software library that provides optimized algorithms for computer vision and machine learning. According to official OpenCV webpage\cite{opencv}, the library contains more then 2500 algorithms and it is being developed 
+by a vast community of contributors around the world. The library is used extensively bu government institutions, research groups and companies including Microsoft, Google, IBM and many more. One of the biggest advantages is its native C++ implementation with bindings making the library available in Python, Java and Matlab and supports Linux, Android, Mac OSX and Windows. Regardless of Linux distribution, similarly to dogtail, OpenCV can be installed easily via python3 package manager(pip). 
+
+From the rich availability of algorithms provided, the image recognition algorithm can be used to either locate or verify the presence of an element on the screen. This approach would require to have set of images containing elements prepared in advance, then it can be used to find the image location on the screenshot of the screen taken during a test run. Compared to verification of the node only via accessibility, this approach would also verify that the element is properly rendering on screen and the shown result is really an element that is shown to the user. Additional benefit is verification of text formatting and colors. On contrary, there this process requires additional manual work of taking images, labelling them and associating them with certain test scenarios. Count of elements displayed on the screen multiple times creates another parameter which would require manual maintenance. The most common example of such case are buttons labelled either OK or Cancel as they are used in many applications.
+
+Another possible approach is to use the shape recognition algorithm which can locate shapes like circles, rectangles and many other common shapes. From the development perspective this would be easier to maintain as there is no requirement for images prepared in advance. Frequent application changes during software development may also cause that tests based on image matching can be easily outdated. This factor forces testers to revisit test suites, therefore the efficiency of automated tests deteriorates. It can also help with the widget location in cases where accessibility is reporting wrong coordinates. On the other hand, locating the right widget in cases when several similarly shaped ones are located on the screen at the same time will yield very inconsistent results.
+
+
+\subsection{OCR}
+Optical Character Recognition or OCR is a method of extracting text from images. One of available open source tools is a tool called Tesseract.
+
+Initially, Tesseract development started in 1985 at Hewlet Packard Laboratories but the major breakthrough was achieved in 2006 when the project was open sourced in cooperation with University of Nevada in Las Vegas. Since then, the project has been developed under the sponsorship of Google\cite{tesseract_history}.
+
+Usability of Tesseract was increased in version 3.x, supporting wide range of image formats and gaining ability to be used in larger number of scripting languages. While Tesseract 3.x is based on traditional computer vision algorithms, in the past few years methods based on Deep Learning have surpassed traditional machine learning techniques by a vast margin, especially in terms of accuracy in several areas of Computer Vision. Remarkable results were achieved in handwriting recognition. Tesseract has implemented a Long Short Term Memory(LTSM) based recognition engine which is a kind of Recurrent Neural Network(RNN). While this kind of RNN is used for to recognize text of random length, a Convolutional Neural Network is used just for recognition of single character. Version 4 provides both legacy OCR engine and new LSTM engine which is enabled by default.\cite{tesseract}
+
+Tesseract can be used as a command line tool, integration in development is possible via Tesseract's API available in python or C++. Setup on Linux or other platforms may differ but the process is accurately described in Tesseract's wiki\footnote{https://github.com/tesseract-ocr/tesseract/wiki}, with the last resort solution - building it from its sources.
+The setup process includes installation of tesseract-ocr package itself, pytesseract python bindings installable via python's package manager pip and Tesseract's language pack with trained data for English language(version 4.x supports 130 languages\footnote{https://github.com/tesseract-ocr/tesseract/wiki/Data-Files#data-files-for-version-400-november-29-2016}). 
+
+Tesseract's OCR engine works best when used with images containing black text on white background in a common font. Text should be approximately horizontal with the height of at least 20 pixels. Surrounding borders around the text can be detected as some random text. With possibilities of image processing provided by OpenCV, the image quality in some cases needs to be improved before applying text detection methods. Most common image preprocessing methods include inverting images, rescaling, binarisation, noise removal, rotation, border removal and page segmentation\footnote{https://github.com/tesseract-ocr/tesseract/wiki/ImproveQuality}.
+
+\begin{figure}[hbt]
+	\centering
+	\includegraphics[width=1\textwidth]{obrazky-figures/ocr+nautilus.png}
+	\caption{Demonstration of the OCR engine detection for the string Documents in Nautilus File Manager window, Red Hat Enterprise Linux 8.2}
+	\label{ocr_nautilus}
+\end{figure}
+\bigskip
+
+Tesseract's API for python is bundled in a module named \texttt{pytesseract}. The module provides several methods, the most important ones for the purposes of this work are \verb|image_to_string| and \verb|image_to_data|. Both methods have one compulsory parameter which is an image intended for text extraction. An image has to be in certain format, one of the options is to load the image through OpenCV's \texttt{imread} method. Additional parameters may be applied including language, timeout and engine configuration\footnote{https://pypi.org/project/pytesseract/}. The first method returns all recognized strings including all whitespaces and other special characters. The second method provides additional metadata about all recognized strings in a form of dictionary like object. The returned dictionary contains the following lists of properties:
+
+
+
+\begin{itemize}
+    \item text - string value, may contain string, special character, one word or line of text
+    \item left - integer value, specifies number of pixels from the left side of the image 
+    \item top - integer value, specifies number of pixels from the top of the image
+    \item width - integer value, specifies width of the recognized string 
+    \item height - integer value, specifies height of the recognized string
+    \item the rest are less important values for this work: \verb|level, page_num, block_num par_num|
+    \verb| line_num, word_num, conf|
+\end{itemize}
+
+
+
+Therefore, occurrences of certain string in an image are filtered and highlighted in every image as demonstrated on Figure \ref{ocr_nautilus} for string \textit{Documents}.
+
+Similarly to OpenCV, Tesseract's OCR engine was tested as an alternative tool for location or verification of widgets which contain text. This method also verifies that the content was properly rendered and is readable for user. OCR systems have limitations and work with certain margin of error which is a fact that also applies to Tesseract. Various applications can use different color schemes including background colors and font colors, input fields and labels. Highlighting elements to perform actions on them can also lead to changes of these conditions. Image preprocessing methods provided by OpenCV can aid to avoiding problems associated with those cases, namely color inversion and binarisation. Those methods would supply Tesseract's engine with an image containing black text and white background for evaluation.
+
+\section{Conclusion}
+This chapter has been dedicated to the Accessibility technologies in GNOME desktop with a deeper look on implementation, libraries and tools for debugging. Furthermore, technologies that may be able to cover limitations and bugs in accessibility has been evaluated as well. Both OpenCV and Tesseract may help with identification, location and verification of non-accessible elements in applications. Possible disadvantage is a delay caused by taking and processing screenshots of applications that have to be taken in the right time. OpenCV's image matching algorithm can reliably locate prearranged images of icons, labels or whole application windows on the screen. Considering the stable application environment with black text on white background in most of applications, Tesseract is able to detect and reliably locate most of the text content on the screen. Other cases can be covered by image preprocessing done again in OpenCV. Furthermore, both technologies are working with actual application content rendered to users, possibly bringing additional level of verification.
+
+\chapter{Proposed solution}
+A goal of this work is the development of a tool able to generate automated test cases for GUI applications. The proposed tool should be able to generate test cases mainly from the AT-SPI metadata. The required metadata should be available for a lot of applications, assuming they are using one of the common frameworks(GTK3, Qt), however this tool is targeted on applications for GNOME desktop\footnote{https://wiki.gnome.org/Apps}. A tool will be developed in language Python3, version 3.6.
+
+All applications are open source and are developed by the community of enthusiasts around the GNOME project. Anyone from the community can fix bugs in applications by sending a merge request with fixes, request a new feature or propose changes with new features. Considering this model of development, there is no future planning nor phase where one can design an abstract model of an application, from which test cases can be derived. But once an application is available, a model can be derived from the AT-SPI metadata. 
+
+\begin{figure}[hbt]
+	\centering
+	\includegraphics[width=1\textwidth]{obrazky-figures/diagram.png}
+	\caption{Architecture of Proposed Solution}
+	\label{Diagram}
+\end{figure}
+
+
+\section{Model Extraction}
+
+The model extraction process relies on AT-SPI metadata which are provided after start of an application. As mentioned in section \ref{pyatspi}, once the application is running, a tree of widgets is exposed and available for interaction via library pyatspi. The provided representation of the tree itself is not suitable to be directly used as a model of an application, as the implementation contains several restrictions for purposes of this work. The first restriction is represented by nodes/widgets with no functionality nor a way of interaction for the user, e.g.: filler, separator, panel etc. Theoretically, a copy of the three could be created with those nodes filtered out, although in that case the parent-child relation ship in the tree needs to be restored accordinly. This is not possible, since the attributes \texttt{children} and \texttt{parent} in \texttt{Atspi.Accessible} object instance are read-only. The tree also contains properties and methods which are available only during an application runtime, possibly disallowing an access to the properties of an extracted model after application crashes or terminates. 
+A solution for those restriction is a custom implementation of tree. The implementations creates a tree from the original tree, with unusable nodes filtered out but preserving the parent-child relationship of the nodes. Furthermore, several important attributes are extracted in the process making them available to be used when the application instance has been terminated. This model will map possibilities of interactions available for user working with an application. It includes every node from the original tree that has an action available and is also executable by ATSPI. However the model not allow execution of the actions directly. The instances of accessible objects are valid only for one application runtime. Therefore, an execution of an action require to use metadata stored in the model to find an instance of a node in the very last instance of the original application tree.
+
+\section{Application runtime}
+\section{Generation process}
+\section{Test Execution}
+\section{OCR integration}
+\section{Configuration}
+
+\section{Testing}
+
+
+\begin{lstlisting}[language=Gherkin,,xleftmargin=3.5ex,caption={.feature file example with a test case},label={feature}]
+
+Feature: Start and stop baobab in different ways
+
+  @startViaCommand
+  Scenario: Start via command
+    Given Start baobab via command in session
+    Then baobab should start
+\end{lstlisting}
+
+
+
+\chapter{Conclusion}
