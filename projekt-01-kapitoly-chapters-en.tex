@@ -273,16 +273,40 @@ All applications are open source and are developed by the community of enthusias
 \end{figure}
 
 
+\section{Configuration}
+apps.yaml
+
 \section{Model Extraction}
 
-The model extraction process relies on AT-SPI metadata which are provided after start of an application. As mentioned in section \ref{pyatspi}, once the application is running, a tree of widgets is exposed and available for interaction via library pyatspi. The provided representation of the tree itself is not suitable to be directly used as a model of an application, as the implementation contains several restrictions for purposes of this work. The first restriction is represented by nodes/widgets with no functionality nor a way of interaction for the user, e.g.: filler, separator, panel etc. Theoretically, a copy of the three could be created with those nodes filtered out, although in that case the parent-child relation ship in the tree needs to be restored accordinly. This is not possible, since the attributes \texttt{children} and \texttt{parent} in \texttt{Atspi.Accessible} object instance are read-only. The tree also contains properties and methods which are available only during an application runtime, possibly disallowing an access to the properties of an extracted model after application crashes or terminates. 
-A solution for those restriction is a custom implementation of tree. The implementations creates a tree from the original tree, with unusable nodes filtered out but preserving the parent-child relationship of the nodes. Furthermore, several important attributes are extracted in the process making them available to be used when the application instance has been terminated. This model will map possibilities of interactions available for user working with an application. It includes every node from the original tree that has an action available and is also executable by ATSPI. However the model not allow execution of the actions directly. The instances of accessible objects are valid only for one application runtime. Therefore, an execution of an action require to use metadata stored in the model to find an instance of a node in the very last instance of the original application tree.
+The model extraction process relies on ATSPI metadata which are provided after start of an application. As mentioned in section \ref{pyatspi}, once the application is running, a tree of widgets is exposed and available for interaction via library pyatspi. The provided representation of the tree itself is not suitable to be directly used as a model of an application, as the implementation contains several restrictions for purposes of this work.
+
+The first restriction is represented by nodes/widgets with no functionality nor a way of interaction for the user, e.g.: filler, separator, panel etc. Theoretically, a copy of the three could be created with those nodes filtered out, although in that case the parent-child relation ship in the tree needs to be restored accordingly. This is not possible, since the attributes \texttt{children} and \texttt{parent} in \texttt{Atspi.Accessible} object instance are read-only. The tree also contains properties and methods which are available only during an application runtime, possibly disallowing an access to the properties of an extracted model after application crashes or terminates. 
+
+A solution for those restriction is a custom implementation of tree. The implementations creates a tree from the original tree, with unusable nodes filtered out but preserving the parent-child relationship of the nodes. Furthermore, several important attributes are extracted in the process making them available to be used when the application instance has been terminated. This model will map possibilities of interactions available for user working with an application. It includes every node from the original tree that has an action available and is also executable by ATSPI. However the model does not allow execution of the actions directly. The instances of accessible objects are valid only for one application runtime,  Therefore, an execution of an action requires to use metadata stored in the model to find an instance of a node in the very last instance of the original application tree.
+
+Implementation of the model consists of three classes and recreates the representation of the three created for requirements of this work. 
+
+An instance of the class \texttt{GNode} represent a one node from the tree. Several attributes are copied from the original \texttt{dogtail.tree.Node} instance, including attributes storing informations about the parent node, data describing the state of the node, name of the action method, if available, and list of children. The list of children is composed also from instances of the \texttt{GNode} class, so the tree is recreated recursively. Therefore, the model is able to hold all information about tested applications, without relying on its state. Any \textt{GNode} structure is not supposed to be used with a wrapper class \texttt{GTree}. An instance of the \texttt{GTree} can represent either a whole application or a smaller part of the application e.g.: a dialog or a menu. As discussed previously, this offline model of the application tree also contains a lot of nodes without ability of interaction, which need to be filtered out. List of \texttt{RoleName}s are gathered in the separate file \texttt{rolenames.py}. Then, the last class \textt{TestTree} is filtering those nodes and preserving the parent-child relation ship. So, the result of this process is an instance of the \texttt{TestTree} object and it contains only nodes required to generate test cases.
 
 \section{Application runtime}
+Before generation process starts, it it necessary to monitor the state of tested applications. It is required that a fresh instance of an application with a default configuration has to be run for every test case. Therefore, after each generated test case there must be a restart and a cleanup of the application. This can be summed up into three steps:
+\begin{enumerate}
+    \item perform a custom cleanup for an application
+    \item make sure that the application is not running
+    \item start the application
+\end{enumerate}
+
+Monitoring the state of an application can be achieved in several ways and there are several factors to be monitored. Performing the check if an application is running can be done by checking UNIX pid of the application process, however it is better to rely on AT-SPI. If the application tree is not available, it can be certainly assumed that application instance is not running. This statement applies also vice versa, so an assertion that an application has started is achievable in a same way. The implementation takes advantage of dogtail's \texttt{tree.node.applications()} call, returning a list of applications currently exposed to the accessibility bus.
+
+Furthermore, is it also necessary to perform certain checks during the time an application is being interacted with. Therefore, every tested application will be run as a subprocess, which allows to capture the output generated by tested applications to standard stream (\textit{stdout, stderrr}). Once the application has been terminated, it also allow us to check the return codes. The implementation relies on python's standard library \texttt{subprocess}. The output generated to standard stream is checked for errors defined in designated configuration file. In case that error occurs throughout the generation process, they are printed right away. The warning contains the number identifying the test in which the error occurred, a full error message and the return code, if available. All other captured messages e.g. warnings, deprecation messages from the GTK framework are saved to one log file, in a folder where the tests are generated. The messages are being appended, so the log file can be checked any time during the generation process. Every line contains the test number, so it can be easily determined when the message occurred.  
+
 \section{Generation process}
-\section{Test Execution}
 \section{OCR integration}
-\section{Configuration}
+optimization
+tesseracts parameters
+
+\section{Test Execution}
+
 
 \section{Testing}
 
