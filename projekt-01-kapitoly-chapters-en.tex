@@ -128,13 +128,11 @@ Assistive technologies are receiving information from the Accessibility toolkit 
 \section{GNOME Accessibility Implementation Library (GAIL)}
 Majority of GNOME applications are written in GTK3 framework. The framework provides dynamically loadable module named GAIL implementing ATK interfaces for all GTK3 widgets. Once the module is loaded at runtime, the application is fully capable to cooperate with ATK without any further modifications.
 GNOME desktop does not load accessibility support libraries by default, it has to be enabled by setting a special \texttt{gsettings} key, which can be achieved either by \texttt{dconf}\footnote{https://wiki.gnome.org/Projects/dconf} editor or via \texttt{gsettings} command line utility using a terminal application:
-% 
+
 \begin{lstlisting}[xleftmargin=3.5ex,caption={Enabling accessibility via gsettings command},label={gsettings}]
 $ gsettings get org.gnome.desktop.interface toolkit-accessibility true
 \end{lstlisting}
-\begin{verbatim}
-   
-\end{verbatim}
+
 Additional configurations may be required for applications written in other frameworks such as QT or Java. Furthermore, implementations of other assitive technologies might be too application specific or use various techniques like OS event snooping etc. Compared to GNOME Desktop, all information required by assistive technologies (AT) are passed from GNOME Accessibility Framework to a toolkit-independent Service Provider Interface (SPI). The SPI is a key component providing stable and consistent API for screen readers, magnifiers, etc. Accessibility support is relying on per-toolkit implementation (GTK3, QT, Java) and its APIs exported through relevant bridges to unified AT-SPI interface as described on Figure \ref{ATSPI_architecture}.
 
 % Make sure that every image is referenced at lease once with proper positioning
