@@ -1,7 +1,6 @@
 % This file should be replaced with your file with an thesis content.
 %=========================================================================
 % Authors: Michal Bidlo, Bohuslav Křena, Jaroslav Dytrych, Petr Veigend and Adam Herout 2019
-
 \lstdefinelanguage{Gherkin}{
 	morekeywords = {
 		Given,
@@ -20,6 +19,32 @@
 	morestring=[b]",
 	morestring=[b]'
 }
+
+\newcommand\YAMLcolonstyle{\color{red}\mdseries}
+% \newcommand\YAMLkeystyle{\color{black}\bfseries}
+\newcommand\YAMLvaluestyle{\color{blue}\mdseries}
+
+% forked from https://tex.stackexchange.com/questions/152829/how-can-i-highlight-yaml-code-in-a-pretty-way-with-listings
+\lstdefinelanguage{yaml}{
+  keywords={true,false,null,y,n},
+  keywordstyle=\color{darkgray}\bfseries,
+%   basicstyle=\YAMLkeystyle,                                 % assuming a key comes first
+  sensitive=false,
+  comment=[l]{\#},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{purple}\ttfamily,
+  stringstyle=\YAMLvaluestyle\ttfamily,
+  moredelim=[l][\color{orange}]{\&},
+  moredelim=[l][\color{magenta}]{*},
+  moredelim=**[il][\YAMLcolonstyle{:}\YAMLvaluestyle]{:},   % switch to value style at :
+  morestring=[b]',
+  morestring=[b]",
+  literate =    {---}{{\ProcessThreeDashes}}3
+                {>}{{\textcolor{red}\textgreater}}1     
+                {|}{{\textcolor{red}\textbar}}1 
+                {\ -\ }{{\mdseries\ -\ }}3,
+}
+
 
 \chapter{Introduction}
 Majority of today's software applications feature a graphical user interface(GUI). The term GUI application or GUI software is used for an application that uses GUI as a primary interface for interaction, also called reactive systems. The visible GUI structures are made from the components, these components accept sequences of user events that alter the state of the software. The modification of state may or may not include a change to the visible GUI itself. 
@@ -217,7 +242,7 @@ From the rich availability of algorithms provided, the image recognition algorit
 Another possible approach is to use the shape recognition algorithm which can locate shapes like circles, rectangles and many other common shapes. From the development perspective this would be easier to maintain as there is no requirement for images prepared in advance. Frequent application changes during software development may also cause that tests based on image matching can be easily outdated. This factor forces testers to revisit test suites, therefore the efficiency of automated tests deteriorates. It can also help with the widget location in cases where accessibility is reporting wrong coordinates. On the other hand, locating the right widget in cases when several similarly shaped ones are located on the screen at the same time will yield very inconsistent results.
 
 
-\subsection{OCR}
+\subsection{OCR}\label{OCR_section}
 Optical Character Recognition or OCR is a method of extracting text from images. One of available open source tools is a tool called Tesseract.
 
 Initially, Tesseract development started in 1985 at Hewlet Packard Laboratories but the major breakthrough was achieved in 2006 when the project was open sourced in cooperation with University of Nevada in Las Vegas. Since then, the project has been developed under the sponsorship of Google\cite{tesseract_history}.
@@ -273,9 +298,6 @@ All applications are open source and are developed by the community of enthusias
 \end{figure}
 
 
-\section{Configuration}
-apps.yaml
-
 \section{Model Extraction}
 
 The model extraction process relies on ATSPI metadata which are provided after start of an application. As mentioned in section \ref{pyatspi}, once the application is running, a tree of widgets is exposed and available for interaction via library pyatspi. The provided representation of the tree itself is not suitable to be directly used as a model of an application, as the implementation contains several restrictions for purposes of this work.
@@ -284,34 +306,97 @@ The first restriction is represented by nodes/widgets with no functionality nor 
 
 A solution for those restriction is a custom implementation of tree. The implementations creates a tree from the original tree, with unusable nodes filtered out but preserving the parent-child relationship of the nodes. Furthermore, several important attributes are extracted in the process making them available to be used when the application instance has been terminated. This model will map possibilities of interactions available for user working with an application. It includes every node from the original tree that has an action available and is also executable by ATSPI. However the model does not allow execution of the actions directly. The instances of accessible objects are valid only for one application runtime,  Therefore, an execution of an action requires to use metadata stored in the model to find an instance of a node in the very last instance of the original application tree.
 
+
+
+\begin{figure}[hbt]
+	\centering
+	\includegraphics[width=0.8\textwidth,clip]{obrazky-figures/tree_diagram.pdf}
+	\caption{Class diagram of recreating a copy of the tree}
+	\label{Diagram}
+\end{figure}
+
 Implementation of the model consists of three classes and recreates the representation of the three created for requirements of this work. 
 
 An instance of the class \texttt{GNode} represent a one node from the tree. Several attributes are copied from the original \texttt{dogtail.tree.Node} instance, including attributes storing informations about the parent node, data describing the state of the node, name of the action method, if available, and list of children. The list of children is composed also from instances of the \texttt{GNode} class, so the tree is recreated recursively. Therefore, the model is able to hold all information about tested applications, without relying on its state. Any \textt{GNode} structure is not supposed to be used with a wrapper class \texttt{GTree}. An instance of the \texttt{GTree} can represent either a whole application or a smaller part of the application e.g.: a dialog or a menu. As discussed previously, this offline model of the application tree also contains a lot of nodes without ability of interaction, which need to be filtered out. List of \texttt{RoleName}s are gathered in the separate file \texttt{rolenames.py}. Then, the last class \textt{TestTree} is filtering those nodes and preserving the parent-child relation ship. So, the result of this process is an instance of the \texttt{TestTree} object and it contains only nodes required to generate test cases.
 
 \section{Application runtime}
-Before generation process starts, it it necessary to monitor the state of tested applications. It is required that a fresh instance of an application with a default configuration has to be run for every test case. Therefore, after each generated test case there must be a restart and a cleanup of the application. This can be summed up into three steps:
+Before generation process starts, it is necessary to have ability to monitor the state of tested applications, including start and stop operations. It is required, that a fresh instance of an application with a default configuration has to be run for every test case. Therefore, after each generated test case there must be a restart and a cleanup of the application. This can be summed up into three steps:
 \begin{enumerate}
     \item perform a custom cleanup for an application
     \item make sure that the application is not running
     \item start the application
 \end{enumerate}
 
+\subsection{Configuration}
+Assurance of compatibility with various applications across the GNOME ecosystem requires, that some metadata describing the tested application has to be provided before test generation process. The metadata are gathered in configuration file written in YAML\footnote{https://yaml.org/} language and only contains the most necessary information required to recognize tested applications. The only required field is \textt{a11y\_app\_name}, which contains a string value describing a name of an application in the accessibility tree. Other values are not compulsory, but depending on the tested application, they might be required on achieve proper functionality. Others are not needed for the generation process but are required for the proper functionality of the generated tests in the CI environment.
+
+\begin{lstlisting}[language=yaml,caption={apps.yaml},label={apps.yaml}]
+libreoffice-startcenter:
+  a11y_app_name: soffice
+  app_process_name: soffice.bin
+  desktop_file_path: /usr/share/applications/libreoffice-startcenter.desktop
+  kill_command: "pkill soffice"
+  params: "--norestore" # required to avoid unwanted file restore dialogs
+  cleanup_cmds:
+    - "pkill soffice" # LO required a custom kill cmd
+    - "rm -rf .config/libreoffice/*"
+  packages:
+    - libreoffice
+\end{lstlisting}
+
+describe yaml, compared which are required by the tool which by the ci
+
+\subsection{Monitoring}
+
 Monitoring the state of an application can be achieved in several ways and there are several factors to be monitored. Performing the check if an application is running can be done by checking UNIX pid of the application process, however it is better to rely on AT-SPI. If the application tree is not available, it can be certainly assumed that application instance is not running. This statement applies also vice versa, so an assertion that an application has started is achievable in a same way. The implementation takes advantage of dogtail's \texttt{tree.node.applications()} call, returning a list of applications currently exposed to the accessibility bus.
 
 Furthermore, is it also necessary to perform certain checks during the time an application is being interacted with. Therefore, every tested application will be run as a subprocess, which allows to capture the output generated by tested applications to standard stream (\textit{stdout, stderrr}). Once the application has been terminated, it also allow us to check the return codes. The implementation relies on python's standard library \texttt{subprocess}. The output generated to standard stream is checked for errors defined in designated configuration file. In case that error occurs throughout the generation process, they are printed right away. The warning contains the number identifying the test in which the error occurred, a full error message and the return code, if available. All other captured messages e.g. warnings, deprecation messages from the GTK framework are saved to one log file, in a folder where the tests are generated. The messages are being appended, so the log file can be checked any time during the generation process. Every line contains the test number, so it can be easily determined when the message occurred.  
 
+\section{OCR integration and optimization}
+The main goal of the OCR integration in this work is to provide an additional level of verification of string values presented by applications and thus not rely purely on AT-SPI. However, the integration of the OCR into generated test cases has to be reliable to avoid false positive results from the tests. Therefore, the integration of Tesseract has to be properly test and the implementation has to contain image preprocessing optimizations and configuration to achieve specified goals.
+Tesseract offers several options allowing to optimize test detection and analysis. It is assumed that most of the tested applications will use english language, therefore the dataset trained for the english language is used.
+
+As discused in \ref{OCR_section}, Tesseract is less prone to errors when operating with images containing black text on white background. Therefore the safest option, is a conversion of images to grayscale. It also has to be considered that some applications are using darker themes or contain parts with different color schemes. To avoid adding additional requirement to the implementation, the string is always being searched in two images. The first one is a gray scale copy of the original image, the second one is inverted copy of the gray scale image. This ensures that the searched string is found on the screen, if present, regardless of theming of an applications and prevents false positive results during the test execution. An example is shown in Figure \ref{ocr_conversion}, containing 3 images, ordered from the top: an original image, a binarized image and an inverted binarized image. The Listings \ref{OCR_text2} is showing the result of the character recognition when image contains black text on white background. The result contains almost all strings shown in screen with some random characters created as an attempt to read icons located in the right top corner of the window. When compared to Listings \ref{OCR_text1}, where the source image contains white text on black background, it is proving an increase of the efficiency achieved after the optimization. The results obtained from the original image are quite similar to the results in Listing \ref{OCR_text1}. 
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\textwidth,clip]{obrazky-figures/OCR_conversion.jpg}
+	\caption{Steps of image preprocessing for Optical Character Recognition tool Tesseract, From the top: original image, binarized image, inverted binarized image}
+	\label{ocr_conversion}
+\end{figure}
+
+\begin{lstlisting}[caption={Text generated from gray scale image in Figure \ref{ocr_conversion}},label={OCR_text1}]
+Pet) Terminal ~ EV ee muerre. Ty Pa) Ones
+Peels ee?
+
+Ca sa
+[test@localhost ~]$ 
+\end{lstlisting}
+\begin{lstlisting}[caption={Text generated from inverted gray scale images in Figure \ref{ocr_conversion}},label={OCR_text2}]
+ Activities Terminal ~ Apr 18 00:22:36 AO Or
+test@localhost:~ - 9 x
+
+File Edit View Search Terminal Help
+[test@localhost ~]$
+\end{lstlisting}
+
+
 \section{Generation process}
-\section{OCR integration}
-optimization
-tesseracts parameters
+\begin{figure}[hbt]
+	\centering
+	\includegraphics[width=1\textwidth,clip]{obrazky-figures/TestGen_class_diagram.pdf}
+	\caption{Class diagram describing an overview over the implementation of the test generator}
+	\label{test_gen}
+\end{figure}
 
 \section{Test Execution}
 
 
+
 \section{Testing}
+test coverage and node covedage
 
-
-\begin{lstlisting}[language=Gherkin,,xleftmargin=3.5ex,caption={.feature file example with a test case},label={feature}]
+\begin{lstlisting}[language=Gherkin,xleftmargin=3.5ex,caption={.feature file example with a test case},label={feature}]
 
 Feature: Start and stop baobab in different ways
 
