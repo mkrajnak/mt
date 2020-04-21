@@ -17,7 +17,9 @@
 	sensitive=true,
 	morecomment=[l]{\#},
 	morestring=[b]",
-	morestring=[b]'
+	morestring=[b]',
+	numbers=left,
+	frame=tb
 }
 
 \newcommand\YAMLcolonstyle{\color{red}\mdseries}
@@ -30,6 +32,8 @@
   keywordstyle=\color{darkgray}\bfseries,
 %   basicstyle=\YAMLkeystyle,                                 % assuming a key comes first
   sensitive=false,
+  numbers=left,
+  frame=tb,
   comment=[l]{\#},
   morecomment=[s]{/*}{*/},
   commentstyle=\color{purple}\ttfamily,
@@ -43,6 +47,12 @@
                 {>}{{\textcolor{red}\textgreater}}1     
                 {|}{{\textcolor{red}\textbar}}1 
                 {\ -\ }{{\mdseries\ -\ }}3,
+}
+
+\lstset{
+  frame=tb,
+  numbers=left,
+  xleftmargin=3.5ex,
 }
 
 
@@ -129,8 +139,8 @@ Assistive technologies are receiving information from the Accessibility toolkit 
 Majority of GNOME applications are written in GTK3 framework. The framework provides dynamically loadable module named GAIL implementing ATK interfaces for all GTK3 widgets. Once the module is loaded at runtime, the application is fully capable to cooperate with ATK without any further modifications.
 GNOME desktop does not load accessibility support libraries by default, it has to be enabled by setting a special \texttt{gsettings} key, which can be achieved either by \texttt{dconf}\footnote{https://wiki.gnome.org/Projects/dconf} editor or via \texttt{gsettings} command line utility using a terminal application:
 
-\begin{lstlisting}[xleftmargin=3.5ex,caption={Enabling accessibility via gsettings command},label={gsettings}]
-$ gsettings get org.gnome.desktop.interface toolkit-accessibility true
+\begin{lstlisting}[numbers=None,caption={Enabling accessibility via gsettings command},label={gsettings}]
+$ gsettings set org.gnome.desktop.interface toolkit-accessibility true
 \end{lstlisting}
 
 Additional configurations may be required for applications written in other frameworks such as QT or Java. Furthermore, implementations of other assitive technologies might be too application specific or use various techniques like OS event snooping etc. Compared to GNOME Desktop, all information required by assistive technologies (AT) are passed from GNOME Accessibility Framework to a toolkit-independent Service Provider Interface (SPI). The SPI is a key component providing stable and consistent API for screen readers, magnifiers, etc. Accessibility support is relying on per-toolkit implementation (GTK3, QT, Java) and its APIs exported through relevant bridges to unified AT-SPI interface as described on Figure \ref{ATSPI_architecture}.
@@ -169,7 +179,7 @@ Library pyatspi is an open source project available for most of Linux distributi
 
 \section{Exploring and Debugging the Accesibility}
 Currently, there are several tools available for exploration and debugging accessibility features not only on GNOME desktop. 
-\subsection{Library dogtail}
+\subsection{Library dogtail}\label{sniff_accerciser}
 dogtail is an open source GUI test framework written in Python implemented as a library around pyatspi. Several modules implements higher level of API to simplify work and interaction with accessible objects during test development. The tool offers less complex functionality, containing tree view of objects with their basic attributes\cite{dogtail_doc}. Package dogtail also includes a GUI tool Sniff, similar to the Accerciser application described in the next section. The most important dogtail modules are described in several next paragraphs.
 
 The module \textit{tree} contains the most important class \textit{Node}, instances of the class represent elements of the desktop user interface. All elements are gathered to tree structure, representing all applications starting with the root element (desktop). The class is implemented as a mixin for Accessible and various Accessible interfaces and is an important unit for it's subclasses, namely \textit{Application}, \textit{Root} and \textit{Window}. The Node class also implements methods used for search of nodes in the tree based on certain criteria. A lambda expression can be passed to methods \textit{findChild} and \textit{findChildren} as argument named \textit{pred}. The lambda expression can contain any properties that uniquely identify nodes, including \textit{name}, \textit{roleName},  \textit{showing} and \textit{visible}. The class also contains action methods that can be performed on nodes without importing other action modules. Verification and identification of shown nodes are easier thanks to method named \textit{blink}. Once the method is called on a certain element, the element is highlighted on the screen for several seconds. This functionality is also part of the Sniff tool where element is highlighted after it is selected in the displayed tree.
@@ -262,8 +272,6 @@ Tesseract's OCR engine works best when used with images containing black text on
 
 Tesseract's API for python is bundled in a module named \texttt{pytesseract}. The module provides several methods, the most important ones for the purposes of this work are \verb|image_to_string| and \verb|image_to_data|. Both methods have one compulsory parameter which is an image intended for text extraction. An image has to be in certain format, one of the options is to load the image through OpenCV's \texttt{imread} method. Additional parameters may be applied including language, timeout and engine configuration\footnote{https://pypi.org/project/pytesseract/}. The first method returns all recognized strings including all whitespaces and other special characters. The second method provides additional metadata about all recognized strings in a form of dictionary like object. The returned dictionary contains the following lists of properties:
 
-
-
 \begin{itemize}
     \item text - string value, may contain string, special character, one word or line of text
     \item left - integer value, specifies number of pixels from the left side of the image 
@@ -274,8 +282,6 @@ Tesseract's API for python is bundled in a module named \texttt{pytesseract}. Th
     \verb| line_num, word_num, conf|
 \end{itemize}
 
-
-
 Therefore, occurrences of certain string in an image are filtered and highlighted in every image as demonstrated on Figure \ref{ocr_nautilus} for string \textit{Documents}.
 
 Similarly to OpenCV, Tesseract's OCR engine was tested as an alternative tool for location or verification of widgets which contain text. This method also verifies that the content was properly rendered and is readable for user. OCR systems have limitations and work with certain margin of error which is a fact that also applies to Tesseract. Various applications can use different color schemes including background colors and font colors, input fields and labels. Highlighting elements to perform actions on them can also lead to changes of these conditions. Image preprocessing methods provided by OpenCV can aid to avoiding problems associated with those cases, namely color inversion and binarisation. Those methods would supply Tesseract's engine with an image containing black text and white background for evaluation.
@@ -284,7 +290,7 @@ Similarly to OpenCV, Tesseract's OCR engine was tested as an alternative tool fo
 This chapter has been dedicated to the Accessibility technologies in GNOME desktop with a deeper look on implementation, libraries and tools for debugging. Furthermore, technologies that may be able to cover limitations and bugs in accessibility has been evaluated as well. Both OpenCV and Tesseract may help with identification, location and verification of non-accessible elements in applications. Possible disadvantage is a delay caused by taking and processing screenshots of applications that have to be taken in the right time. OpenCV's image matching algorithm can reliably locate prearranged images of icons, labels or whole application windows on the screen. Considering the stable application environment with black text on white background in most of applications, Tesseract is able to detect and reliably locate most of the text content on the screen. Other cases can be covered by image preprocessing done again in OpenCV. Furthermore, both technologies are working with actual application content rendered to users, possibly bringing additional level of verification.
 
 \chapter{Proposed solution}
-A goal of this work is the development of a tool able to generate automated test cases for GUI applications. The proposed tool should be able to generate test cases mainly from the AT-SPI metadata. The required metadata should be available for a lot of applications, assuming they are using one of the common frameworks(GTK3, Qt), however this tool is targeted on applications for GNOME desktop\footnote{https://wiki.gnome.org/Apps}. A tool will be developed in language Python3, version 3.6.
+A goal of this work is the development of a tool able to generate automated test cases for GUI applications. The proposed tool should be able to generate test cases mainly from the AT-SPI metadata. The required metadata should be available for a lot of applications, assuming they are using one of the common frameworks(GTK3, QT), however this tool is targeted on applications for GNOME desktop\footnote{https://wiki.gnome.org/Apps}. A tool will be developed in language Python3, version 3.6.
 
 All applications are open source and are developed by the community of enthusiasts around the GNOME project. Anyone from the community can fix bugs in applications by sending a merge request with fixes, request a new feature or propose changes with new features. Considering this model of development, there is no future planning nor phase where one can design an abstract model of an application, from which test cases can be derived. But once an application is available, a model can be derived from the AT-SPI metadata. 
 
@@ -302,7 +308,7 @@ The model extraction process relies on ATSPI metadata which are provided after s
 
 The first restriction is represented by nodes/widgets with no functionality nor a way of interaction for the user, e.g.: filler, separator, panel etc. Theoretically, a copy of the three could be created with those nodes filtered out, although in that case the parent-child relation ship in the tree needs to be restored accordingly. This is not possible, since the attributes \texttt{children} and \texttt{parent} in \texttt{Atspi.Accessible} object instance are read-only. The tree also contains properties and methods which are available only during an application runtime, possibly disallowing an access to the properties of an extracted model after application crashes or terminates. 
 
-A solution for those restriction is a custom implementation of tree. The implementations creates a tree from the original tree, with unusable nodes filtered out but preserving the parent-child relationship of the nodes. Furthermore, several important attributes are extracted in the process making them available to be used when the application instance has been terminated. This model will map possibilities of interactions available for user working with an application. It includes every node from the original tree that has an action available and is also executable by ATSPI. However the model does not allow execution of the actions directly. The instances of accessible objects are valid only for one application runtime,  Therefore, an execution of an action requires to use metadata stored in the model to find an instance of a node in the very last instance of the original application tree.
+A solution for those restriction is a custom implementation of tree. The implementations creates a tree from the original tree, with unusable nodes filtered out but preserving the parent-child relationship of the nodes. Furthermore, several important attributes are extracted in the process, making them available when the application instance has been terminated. This model will map possibilities of interactions available for user working with an application. It includes every node from the original tree that has an action available and is also executable by ATSPI. However the model does not allow execution of the actions directly. The instances of accessible objects are valid only for one application runtime. Therefore, an execution of an action requires to use metadata stored in the model. This metadata are afterwards used to find an instance of a node in the current instance of the original application tree.
 
 
 
@@ -313,22 +319,22 @@ A solution for those restriction is a custom implementation of tree. The impleme
 	\label{tree_diagram}
 \end{figure}
 
-Implementation of the model consists of three classes and recreates the representation of the three created for requirements of this work. 
+Implementation of the model consists of three classes and recreates the representation of the tree created for requirements of this work. 
 
-An instance of the class \texttt{GNode} represent a one node from the tree. Several attributes are copied from the original \texttt{dogtail.tree.Node} instance, including attributes storing informations about the parent node, data describing the state of the node, name of the action method, if available, and list of children. The list of children is composed also from instances of the \texttt{GNode} class, so the tree is recreated recursively. Therefore, the model is able to hold all information about tested applications, without relying on its state. Any \texttt{GNode} structure is not supposed to be used with a wrapper class \texttt{GTree}. An instance of the \texttt{GTree} can represent either a whole application or a smaller part of the application e.g.: a dialog or a menu. As discussed previously, this offline model of the application tree also contains a lot of nodes without ability of interaction, which need to be filtered out. List of \texttt{RoleName}s are gathered in the separate file \texttt{rolenames.py}. Then, the last class \texttt{TestTree} is filtering those nodes and preserving the parent-child relation ship. So, the result of this process is an instance of the \texttt{TestTree} object and it contains only nodes required to generate test cases.
+An instance of the class \texttt{GNode} represents one node from the tree. Several attributes are copied from the original \texttt{dogtail.tree.Node} instance, including attributes storing informations about the parent node, data describing the state of the node, the list of children and if available, the name of the action method. The list of children is also composed from instances of the \texttt{GNode} class, so the tree is recreated recursively. Therefore, the model is able to hold all information about tested applications, without relying on their state. An instance of the \texttt{GTree} can represent either a whole application or a smaller part of the application e.g.: a dialog or a menu. As discussed previously, this offline model of the application tree also contains a lot of nodes without ability of interaction, which needs to be filtered out. The list of \texttt{RoleName}s are gathered in the separate file \texttt{rolenames.py}. Then, the last class \texttt{TestTree} serves as a wrapper, which filters those nodes and preserves the parent-child relationship. So, the result of this process is an instance of the \texttt{TestTree} object and it contains only nodes required to generate test cases.
 
 \section{Application runtime}
-Before generation process starts, it is necessary to have ability to monitor the state of tested applications, including start and stop operations. It is required, that a fresh instance of an application with a default configuration has to be run for every test case. Therefore, after each generated test case there must be a restart and a cleanup of the application. This can be summed up into three steps:
+Before generation process starts, it is necessary to have ability to monitor the state of tested applications, including start and stop operations. The test generation process performs various actions available in an application that might change settings or layout of the application. Generation of every test case must start from the same state. A solution is summed up in three steps:
 \begin{enumerate}
-    \item perform a custom cleanup for an application
-    \item make sure that the application is not running
-    \item start the application
+    \item make sure that the application is not running or force the application to stop
+    \item reset the application settings to default state by performing predefined custom cleanup
+    \item start a new instance of the application with the defautl settings.
 \end{enumerate}
 
 \subsection{Configuration}
-Assurance of compatibility with various applications across the GNOME ecosystem requires, that some metadata describing the tested application has to be provided before test generation process. The metadata are gathered in configuration file written in YAML\footnote{https://yaml.org/} language and only contains the most necessary information required to recognize tested applications. The only required field is \texttt{a11y\_app\_name}, which contains a string value describing a name of an application in the accessibility tree. Other values are not compulsory, but depending on the tested application, they might be required on achieve proper functionality. Others are not needed for the generation process but are required for the proper functionality of the generated tests in the CI environment.
+Assurance of compatibility with various applications across the GNOME ecosystem requires, that some metadata describing the tested application has to be provided before test generation process. The metadata are gathered in configuration file written in YAML\footnote{https://yaml.org/} language and only contains the most necessary information required to recognize tested applications. The reasons behind choosing YAML is syntax simplicity and human readability in comparison with e.g. JSON\footnote{https://www.json.org/json-en.html} or XML\footnote{https://www.w3.org/XML/}, followed by the reliable support in python provided by library \texttt{pyyaml}.\cite{yaml} The purpose of this configuration file to have one dedicated place as a single source of truth, which means that all application related changes can be edited without any changes in source code of test generator.
 
-\begin{lstlisting}[language=yaml,caption={apps.yaml},label={apps.yaml}]
+\begin{lstlisting}[language=yaml,caption={apps.yaml},label={apps.yaml},float]
 libreoffice-startcenter:
   a11y_app_name: soffice
   app_process_name: soffice.bin
@@ -340,46 +346,34 @@ libreoffice-startcenter:
     - "rm -rf .config/libreoffice/*"
   packages:
     - libreoffice
+  flatpak: False
 \end{lstlisting}
 
-describe yaml, compared which are required by the tool which by the ci
+The \texttt{apps.yaml} gathers data about all tested applications. Each application entry starts with with an application name on the top level. The application name should be unique as the name is used as a folder name of the generated project, otherwise there are no further requirements. Other values may vary per tested application and they might not be necessary for the test generation but they might influence the result of both test generation and test execution. The list items that can be defined for each application is following:
 
-\subsection{Monitoring}
+\begin{itemize}
+    \item \texttt{a11y\_app\_name} - is the only compulsory item, define a name of the application in the accessibility tree, the value can be found in Sniff or Accerciser as previously discussed in Section \ref{sniff_accerciser}
+     \item \texttt{app\_process\_name} - is required if the name of the application process is different than the application name, the value is used to during the cleanup between the executions to make sure an instance of the application has been killed and a next test will use a new one
+     \item \texttt{desktop\_file\_path} - required if default qecore's method fails to find desktop file of an application, desktop file contains usefull data about an application, including a command to run an application from the command line
+     \item \texttt{params} - required if the application needs to be run with custom command line parameters, all parameters should be entered in one string with separated with a space
+     \item \texttt{cleanup\_cmds} - if provided, contains a list of commands that will be executed after generation of each test case. Executed commands should always restore the application to it's default settings. The commands are also used during the test execution of generated test cases, after finishing each test case. 
+     \item \texttt{packages} - required for execution in CI, contains a list of rpm\footnote{https://rpm.org/} packages required to be installed to both generate and execute tests
+     \item \texttt{flatpak} - required if test application is a flatpak
+\end{itemize}
 
-Monitoring the state of an application can be achieved in several ways and there are several factors to be monitored. Performing the check if an application is running can be done by checking UNIX pid of the application process, however it is better to rely on AT-SPI. If the application tree is not available, it can be certainly assumed that application instance is not running. This statement applies also vice versa, so an assertion that an application has started is achievable in a same way. The implementation takes advantage of dogtail's \texttt{tree.node.applications()} call, returning a list of applications currently exposed to the accessibility bus.
+\subsection{Monitoring an Application State}
+There are several factors to be monitored during the runtime of the tested application. There are numerous cases when it would be required to check whether an application has started or if it is still running. This can be done either by examination of UNIX pid belonging the application process or by relying on AT-SPI. If the application tree is not available, it can be certainly assumed that application instance is not running. This statement applies also vice versa, so an assertion that an application has started is achievable in a same way. The implementation takes advantage of dogtail's \texttt{tree.node.applications()} call, returning a list of applications currently exposed to the accessibility bus.
 
-Furthermore, is it also necessary to perform certain checks during the time an application is being interacted with. Therefore, every tested application will be run as a subprocess, which allows to capture the output generated by tested applications to standard stream (\textit{stdout, stderrr}). Once the application has been terminated, it also allow us to check the return codes. The implementation relies on python's standard library \texttt{subprocess}. The output generated to standard stream is checked for errors defined in designated configuration file. In case that error occurs throughout the generation process, they are printed right away. The warning contains the number identifying the test in which the error occurred, a full error message and the return code, if available. All other captured messages e.g. warnings, deprecation messages from the GTK framework are saved to one log file, in a folder where the tests are generated. The messages are being appended, so the log file can be checked any time during the generation process. Every line contains the test number, so it can be easily determined when the message occurred.  
-
-\section{OCR integration and optimization}
-The main goal of the OCR integration in this work is to provide an additional level of verification of string values presented by applications and thus not rely purely on AT-SPI. However, the integration of the OCR into generated test cases has to be reliable to avoid false positive results from the tests. Therefore, the integration of Tesseract has to be properly test and the implementation has to contain image preprocessing optimizations and configuration to achieve specified goals.
-Tesseract offers several options allowing to optimize test detection and analysis. It is assumed that most of the tested applications will use english language, therefore the dataset trained for the english language is used.
-
-As discused in \ref{OCR_section}, Tesseract is less prone to errors when operating with images containing black text on white background. Therefore the safest option, is a conversion of images to grayscale. It also has to be considered that some applications are using darker themes or contain parts with different color schemes. To avoid adding additional requirement to the implementation, the string is always being searched in two images. The first one is a gray scale copy of the original image, the second one is inverted copy of the gray scale image. This ensures that the searched string is found on the screen, if present, regardless of theming of an applications and prevents false positive results during the test execution. An example is shown in Figure \ref{ocr_conversion}, containing 3 images, ordered from the top: an original image, a binarized image and an inverted binarized image. The Listings \ref{OCR_text2} is showing the result of the character recognition when image contains black text on white background. The result contains almost all strings shown in screen with some random characters created as an attempt to read icons located in the right top corner of the window. When compared to Listings \ref{OCR_text1}, where the source image contains white text on black background, it is proving an increase of the efficiency achieved after the optimization. The results obtained from the original image are quite similar to the results in Listing \ref{OCR_text1}. 
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=1\textwidth,clip]{obrazky-figures/OCR_conversion.jpg}
-	\caption{Steps of image preprocessing for Optical Character Recognition tool Tesseract, From the top: original image, binarized image, inverted binarized image}
-	\label{ocr_conversion}
-\end{figure}
-
-\begin{lstlisting}[caption={Text generated from gray scale image in Figure \ref{ocr_conversion}},label={OCR_text1}]
-Pet) Terminal ~ EV ee muerre. Ty Pa) Ones
-Peels ee?
-
-Ca sa
-[test@localhost ~]$ 
-\end{lstlisting}
-\begin{lstlisting}[caption={Text generated from inverted gray scale images in Figure \ref{ocr_conversion}},label={OCR_text2}]
- Activities Terminal ~ Apr 18 00:22:36 AO Or
-test@localhost:~ - 9 x
-
-File Edit View Search Terminal Help
-[test@localhost ~]$
-\end{lstlisting}
-
+Furthermore, is it also necessary to perform certain checks during the time an application is being interacted with. Therefore, every tested application will be run as a subprocess, which allows to capture the output generated by tested applications to standard streams (\textit{stdout, stderrr}). Once the application has been terminated, it also allows us to check the return codes. The implementation relies on python's standard library \texttt{subprocess}. The output generated to standard stream is checked for errors defined in designated configuration file. In case of error throughout the generation process, an error message is printed immediately to warn about the possible bug in a the tested application. The warning contains the number identifying the test in which the error occurred, a full error message and the return code, if available. All other captured messages e.g. warnings or deprecation messages from the GTK framework are saved to one log file, in a folder where the tests are generated. The messages are being appended, so the log file can be checked any time during the generation process. Every line contains the test number, so it can be easily determined when the message occurred and match it with a reproducer from the test case.  
 
 \section{Generation process}
+The test generation process consist of several steps described in the following subsections.
+
+\subsection{Generating an Application Project and Setup}
+Before generation process starts, a proper project structure must be created, so the generated test cases will be ready for export and execution. Furthermore, there are several factors in GNOME desktop environment, that needs to be addressed when tests will be both generated and executed. The library aims to create clean environment with focus on testing applications. 
+
+The development of this project also lead to a contributions submitted to the qecore project. The main goal was achieved in creating a better integration for flatpak applications\footnote{\url{https://gitlab.com/dogtail/qecore/-/blob/master/qecore/flatpak.py}}. Other submitted changes were delivering minor fixes\footnote{\url{https://gitlab.com/dogtail/qecore/-/merge_requests/24},}\footnote{\url{https://gitlab.com/dogtail/qecore/-/merge_requests/26}} and new class parameters allowing to test LibreOffice applications\footnote{\url{https://gitlab.com/dogtail/qecore/-/merge_requests/25}}.  
+
 \begin{figure}[hbt]
 	\centering
 	\includegraphics[width=1\textwidth,clip]{obrazky-figures/TestGen_class_diagram.pdf}
@@ -387,15 +381,50 @@ File Edit View Search Terminal Help
 	\label{test_gen}
 \end{figure}
 
+
+\section{OCR integration}
+The main goal of the OCR integration in this work is to provide an additional level of verification of string values presented by applications and thus not rely purely on AT-SPI. However, the integration of the OCR into generated test cases has to be reliable to avoid false positive results from the tests. Therefore, the integration of Tesseract has to be properly tested and the implementation has to contain image preprocessing optimizations and configuration to achieve specified goals.
+Tesseract offers several options that allows to optimize test detection and analysis. One of them is  the definition of the recognized language. It is assumed that most of the tested applications will use the English language and therefore, the dataset trained for the English language is used.
+
+As discused in \ref{OCR_section}, Tesseract is less prone to errors when operating with images containing black text on white background. Therefore the safest option, is a conversion of images with thresholding to binary colors (black and white). It also has to be considered that some applications are using darker themes or contain parts with different color schemes. To avoid problems with text detection connected to this, the string is always searched in two images. The first one is a binarized copy of the original image, the second one is a copy of the binarized scale image with inverted colors. This ensures that the searched string is found on the screen, if present, regardless of a theme set in an application and prevents false positive results during the test execution. An example is shown in Figure \ref{ocr_conversion}, containing 3 images, ordered from the top: an original image, a binarized image and an inverted binarized image. The Listings \ref{OCR_text2} is showing the result of the character recognition when image contains black text on a white background. The result contains almost all strings shown on the screen with some random characters created as an attempt to read icons located in the right top corner of the window. When compared to Listings \ref{OCR_text1}, where the source image contains white text on a black background, it proves an increase of the efficiency achieved after the optimization. The results obtained from the original image are quite similar to the results in Listing \ref{OCR_text1}. The conversion is implemented via \texttt{threshold} method from the OpenCV module.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\textwidth,clip]{obrazky-figures/OCR_conversion.jpg}
+	\caption{Steps of image preprocessing for Optical Character Recognition tool Tesseract, From the top: the original image, the binarized image, the inverted binarized image}
+	\label{ocr_conversion}
+\end{figure}
+
+\begin{lstlisting}[caption={Text generated from the binarized image in Figure \ref{ocr_conversion}},label={OCR_text1}]
+Pet) Terminal ~ EV ee muerre. Ty Pa) Ones
+Peels ee?
+
+Ca sa
+[test@localhost ~]$ 
+\end{lstlisting}
+\begin{lstlisting}[caption={Text generated from the inverted binarized image in Figure \ref{ocr_conversion}},label={OCR_text2}]
+ Activities Terminal ~ Apr 18 00:22:36 AO Orhttps://www.overleaf.com/project/5e92281e1d9c8a0001314a50
+test@localhost:~ - 9 x
+
+File Edit View Search Terminal Help
+[test@localhost ~]$
+\end{lstlisting}
+
+Further experiments have shown additional issues with text formatting and recognition of certain letters. These facts lead to another set of  optimizations that were implemented to avoid false positive test cases. A search for a string containing multiple words with white spaces might fail because the result might not contain all the white spaces. Strings containing symbols …, -, \_, and — could be easily exchanged during the recognition. Those letters are not as important than letters representing the actual text. Therefore, a search for a match in extracted text is performed twice. The first attempt tries to match the string with white spaces and full formatting. If that attempt fails, the second attempt breaks the string into words and tries to match every word separately. The second attempt is also followed by a warning message that the string was not matched in the original version.
+
+The Tesseract has shown occasional difficulties with recognition of similarly looking letters. The mostly affected character was \textbf{I} exchanged for \textbf{1}, followed by \textbf{S} exchanged for \textbf{5}. Despite these occasional cases, the implementation works quite reliably both during the test generation process and the execution process. Nevertheless, the time consumed by taking the screenshots during the generation process is significant. Therefore, the developed tool has the ability to disable generation of the OCR steps during the generation of test cases through the command line parameter \texttt{-{}-disable-OCR}. If the generated test cases already contain steps performing OCR checks and are intended to be executed without them, the tests can be executed with the shell variable \texttt{OCR=False}. The defined variable will cause skipping of the OCR checks, although they will still be shown in the test logs as executed. This is caused by the limitation of the behave framework as it only allows to skip whole test scenarios. The test results executed with the variable will contain a warning message about skipped OCR steps.
+
+
 \section{Test Execution}
+The result of the generation process is a folder structure containing generated test cases, configuration files and scripts for execution in CI environment. Generated test cases are located in in file named \texttt{generated.feature}, the file contains all the test cases divided in so called scenarios. Each scenario has a unique name starting with character \texttt{@}, thus allowing a single test execution if required. The test can be executed also at once by simply executing command \texttt{behave} in the generated project folder. The test are also respecting the cleanup commands which are set in \texttt{apps.yaml}. The cleanup is always executed after the finish of the test, regardless of the result of the executed tests. Behave either prints steps from a test scenario to standard output or can generate an HTML log, which is more suitable when executing in the CI environment. Thanks from the setup done by the \textit{qecore} library, the test reports have embedded logs, videos from the test runs and a screenshot generated in a moment, when test case fails. 
+An example of the generated test case scenario is available ....
 
 
 
-\section{Testing}
-test coverage and node covedage
+\chapter{Testing en results}
+test coverage, node coverage, action coverage
 
-\begin{lstlisting}[language=Gherkin,xleftmargin=3.5ex,caption={.feature file example with a test case},label={feature}]
-
+\begin{lstlisting}[language=Gherkin,caption={.feature file example with a test case},label={feature}]
 Feature: Start and stop baobab in different ways
 
   @startViaCommand
