@@ -80,7 +80,7 @@ Next several sections are dedicated to various testing techniques used to test G
 
 
 \section{Random Input Testing}
-The Random input testing technique is also referred to as stochastic testing or monkey testing. The term monkey is mentioned in any form of automated testing performed without any user bias. This method distinguishes 3 types of monkeys testing the application by generating random sequences of events from both a keyboard and a mouse. Dumb monkeys do not have any knowledge about the system, nor its state and they are not aware which actions are legal or illegal. The downsize is that they cannot recognize a failure when they encounter one. Their only goal is to crash the SUT. Other group, referred to as semismart monkeys, can recognize a bug when they see one. The last group are smart monkeys, who have certain knowledge about the application they are testing, obtained from a state table or a model of SUT. On the other hand, smart monkeys are the most expensive to develop. Despite the fact that a random testing tool has a weak coverage, Microsoft has reported that 10-20\% bugs in their software were discovered by a  random input testing method.\cite{nyman}
+The Random input testing technique is also referred to as stochastic testing or monkey testing. The term monkey is mentioned in any form of automated testing performed without any user bias. This method distinguishes 3 types of monkeys who are testing the application by generating random sequences of events from both a keyboard and a mouse. Dumb monkeys do not have any knowledge about the system, nor its state and they are not aware which actions are legal or illegal. The downsize is that they cannot recognize a failure when they encounter one. Their only goal is to crash the SUT. Other group, referred to as semismart monkeys, can recognize a bug when they see one. The last group are smart monkeys, who have certain knowledge about the application they are testing, obtained from a state table or a model of SUT. On the other hand, smart monkeys are the most expensive to develop. Despite the fact that a random testing tool has a weak coverage, Microsoft has reported that 10-20\% bugs in their software were discovered by a  random input testing method.\cite{nyman}
 % TODO fuzzy testing
 
 \section{Manual Testing}
@@ -90,14 +90,14 @@ In general, high-level Graphical User Interface (GUI) and acceptance tests are b
 The technique handles the software as a black box. A tester has no knowledge about the implementation of the software. Design of the test cases is only based on the specifications and requirements. Tests usually involve a set of both valid and invalid inputs with predictable outputs. Black box testing plays a significant role in testing as it is evaluating overall functionality of the software.\cite{white_black}
 
 \section{White Box Testing}
-The design of test cases depends on the implementation of the software entity. White box testing is focused on internal logic and structure of the code, testing the software from the developer's perspective. Design of test cases require full knowledge about software's sources, thus allowing to possibly test every branch in the code. Test cases are usually written as unit tests, system or integration tests. Tests are suitable to execution both during the development and testing of the finished product.\cite{white_black}
+The design of test cases depends on the implementation of the software entity. White box testing is focused on internal logic and structure of the code, testing the software from the developer's perspective. Design of test cases requires full knowledge about software's sources, thus allowing to possibly test every branch in the code. Test cases are usually written as unit tests, system or integration tests. Tests are suitable for execution during the development and testing of the finished product as well.\cite{white_black}
 
 \section{Record/Replay and Scripting Tools}
 To mitigate mentioned concerns and increase the quality of a software, an automated testing has been proposed as a solution. Considerable amount of work has been devoted to high-level test automation, resulting in Record and Replay techniques. Tools are  continuously recording the coordinates and properties of GUI components during manual user interaction. Obtained recordings can be played back to emulate user interaction and validate the correct state of system during the regression testing. These techniques have also certain limitations, which is typically sensitivity to GUI layout changes and code changes. The changes are forcing testers to repeat the recording processes and therefore, they cause additional costs by maintaining automated tests.\cite{guitesting} 
 
-Example of this category of tools is the open source project GNU Xnee. The project consist of library and two applications. Test automation is one of the several use cases for this project. However, the project is limited to X11 display environments.\cite{xnee}
+Example of this category of tools is the open source project GNU Xnee\footnote{\url{https://xnee.wordpress.com/}}. The project consist of library and two applications. Test automation is one of the several use cases for this project. However, the project is limited to X11 display environments.\cite{xnee}
 
-Similar approach for testing is presented by Scrip-based frameworks. These frameworks provide scripting languages to control the GUI. Instead of performing tests manually, testers are writing scrips to automatically interact with the GUI. Scripts contain some assertions to check whether the application executed sequence of events correctly. Violations of assertions during the test results in test case failure. These tools are widely used across the industry, examples of such tools include JFCUnit, Selenium WebDriver, Robotium, Abbot, and SOAtest.\cite{NguyenBao2014Gait}
+Similar approach for testing is presented by Scrip-based frameworks. These frameworks provide scripting languages to control the GUI. Instead of performing tests manually, testers are writing scripts to automatically interact with the GUI. Scripts contain some assertions to check whether the application executed sequence of events correctly. Violation of assertions during the test results in test case failure. Examples of these tools used widely across the industry are: JFCUnit\footnote{\url{http://jfcunit.sourceforge.net/}} as a tool for testing Java Swing applications. Selenium\footnote{\url{https://www.selenium.dev/documentation/en/}} as a project with range of tools and libraries that enables automation of web applications. Robotium\footnote{\url{https://github.com/RobotiumTech/robotium}} test automation framework, which allows to write automatic black box tests for the UI of Android applications. And finally SOAtest\footnote{\url{https://www.parasoft.com/soatest/web-ui-testing}}, with support of integration testing for web applications by capturing user interactions directly in the browser without requiring any scripting.\cite{NguyenBao2014Gait}
 
 \section{Random-walk Tools}
 Unlike previously mentioned script-based and capture/replay tools, random-walk tools do not generate test cases. They just randomly walk through the GUI and randomly execute all events they encounter. These tools are easy to use and may find bugs by using unexpected combinations of events, on the contrary, they are able to reveal only specific tool-supported error events(e.g., crashes, timeouts, permission errors). Tools using this technique are Android Monkey\footnote{https://developer.android.com/studio/test/monkey} and GUIdancer\footnote{https://testing.bredex.de/}.
@@ -105,7 +105,7 @@ Unlike previously mentioned script-based and capture/replay tools, random-walk t
 \section{Solutions Based on Image Recognition}
 This category of solutions is often being referred to as Visual GUI Testing. It is an emerging technique combining scripting languages with an image recognition. The image recognition allows to test various systems regardless of their implementation, operating systems or even platform. Tools are providing support for emulating user interaction with the bitmap components(images, buttons) shown to a user on the screen. The biggest limitation of solutions based on the image recognition is that they are not suitable for highly animated GUIs.\cite{guitesting}. There is also a considerable amount of work required for test maintenance, mostly caused by a design changes of widgets throughout the development.   
 
-There are several examples, including the open source tool Sikuli and commercial tool JAutomate. Trivial automation of GUIs via image matching algorithm can be achieved with a Python module named Xpresser. The tool works with a directory of images containing cropped images of widgets. Once the image matching algorithm identifies a location of cropped image on the screen, an intended action can be performed.\cite{xpresser} Xpresser is mostly used for building automated test cases for Linux distribution Ubuntu.
+There are several examples, including the open source tools Sikuli\footnote{\url{http://www.sikulix.com/#home1}} and Xpresser\footnote{\url{https://wiki.ubuntu.com/Xpresser}}. Trivial automation of GUIs via image matching algorithm can be achieved with a Python module named Xpresser\footnote{\url{https://wiki.ubuntu.com/Xpresser}}. The tool works with a directory of images containing cropped images of widgets. Once the image matching algorithm identifies a location of cropped image on the screen, an intended action can be performed.\cite{xpresser} Xpresser is mostly used for building automated test cases for Linux distribution Ubuntu.
 
 \section{Model-based Testing}
 Model-based testing(MBT) is a software testing technique where test cases are generated from a model that describes functional aspects of the SUT. It allows checking the conformity between the implementation and the model of the SUT, with more systematic and automatic approach in the testing process. The test generation phase is based on algorithm that traverses the model and produce test cases suitable for automatic execution.\cite{embedded}
@@ -145,8 +145,8 @@ Assistive technologies are receiving information from the Accessibility toolkit 
 Majority of GNOME applications are written in GTK3 framework. The framework provides dynamically loadable module named GAIL implementing ATK interfaces for all GTK3 widgets. Once the module is loaded at runtime, the application is fully capable to cooperate with ATK without any further modifications.
 GNOME desktop does not load accessibility support libraries by default, it has to be enabled by setting a special \texttt{gsettings} key, which can be achieved either by \texttt{dconf}\footnote{https://wiki.gnome.org/Projects/dconf} editor or via \texttt{gsettings} command line utility using a terminal application:
 
-\begin{lstlisting}[numbers=None,caption={Enabling accessibility via gsettings command},label={gsettings}]
-$ gsettings set org.gnome.desktop.interface toolkit-accessibility true
+\begin{lstlisting}[numbers=none,caption={Enabling accessibility via gsettings command},label={gsettings}]
+gsettings set org.gnome.desktop.interface toolkit-accessibility true
 \end{lstlisting}
 
 Additional configurations may be required for applications written in other frameworks such as QT or Java. Furthermore, implementations of other assitive technologies might be too application specific or use various techniques like OS event snooping etc. Compared to GNOME Desktop, all information required by assistive technologies (AT) are passed from GNOME Accessibility Framework to a toolkit-independent Service Provider Interface (SPI). The SPI is a key component providing stable and consistent API for screen readers, magnifiers, etc. Accessibility support is relying on per-toolkit implementation (GTK3, QT, Java) and its APIs exported through relevant bridges to unified AT-SPI interface as described on Figure \ref{ATSPI_architecture}.
@@ -161,8 +161,7 @@ Additional configurations may be required for applications written in other fram
 
 The widget is accessible, if a developer uses any GTK3/GNOME widget and follows the general accessibility guidelines\footnote{https://developer.gnome.org/accessibility-devel-guide/stable/gad-coding-guidelines.html.en} with properly implemented ATK interfaces. Considering that the stock GTK3/GNOME toolkit widgets have implementations of these interfaces provided, new widgets will inherit the functionality and gain suitable accessibility support as well. The default implementation of ATK interfaces might be altered by applications, as developers can enrich their descriptions of widgets and improve the overall user experience in special cases, e.g. when widget is used for some less expected purposes or the default description is too general. The ATK provides set of functions to achieve this along with the ability to make any custom component accessible\footnote{https://developer.gnome.org/accessibility-devel-guide/stable/gad-custom.html.en}.\cite{accessibleWidgets}
 
-\newpage
-\section{Library pyatspi}\label{pyatspi}
+\section{Library Pyatspi}\label{library_pyatspi}
 Package pyataspi is a Python wrapper around AT-SPI's C implementation, which loads the Accessibility typelib and imports the classes implementing AT-SPI interfaces.\cite{pyatspi}
 
 AT-SPI exposes applications as a tree of widgets, starting with a root element where every sub-element represent one running application on the GNOME desktop. Each application has zero or more child elements, each child is distinguishable by its position in the tree and several object properties. Some of these properties are encapsulated inside the accessible object and their values must be obtained through corresponding methods, so called getters. Small set of properties are described in the following list:
@@ -183,10 +182,10 @@ Additionally, elements can be linked together in other useful ways (except paren
 
 Library pyatspi is an open source project available for most of Linux distributions via distro specific packaging services (package named \textit{python3-atspi}) or is available to be built from its sources\footnote{https://gitlab.gnome.org/GNOME/pyatspi2}.
 
-\section{Exploring and Debugging the Accesibility}
+\section{Exploring and Debugging The Accesibility}
 Currently, there are several tools available for exploration and debugging accessibility features not only on GNOME desktop. 
-\subsection{Library dogtail}\label{sniff_accerciser}
-dogtail is an open source GUI test framework written in Python implemented as a library around pyatspi. Several modules implements higher level of API to simplify work and interaction with accessible objects during test development. The tool offers less complex functionality, containing tree view of objects with their basic attributes\cite{dogtail_doc}. Package dogtail also includes a GUI tool Sniff, similar to the Accerciser application described in the next section. The most important dogtail modules are described in several next paragraphs.
+\subsection{Library Dogtail}\label{sniff_accerciser}
+Dogtail is an open source GUI test framework written in Python implemented as a library around pyatspi. Several modules implements higher level of API to simplify work and interaction with accessible objects during test development. The tool offers less complex functionality, containing tree view of objects with their basic attributes\cite{dogtail_doc}. Package dogtail also includes a GUI tool Sniff, similar to the Accerciser application described in the next section. The most important dogtail modules are described in several next paragraphs.
 
 The module \textit{tree} contains the most important class \textit{Node}, instances of the class represent elements of the desktop user interface. All elements are gathered to tree structure, representing all applications starting with the root element (desktop). The class is implemented as a mixin for Accessible and various Accessible interfaces and is an important unit for it's subclasses, namely \textit{Application}, \textit{Root} and \textit{Window}. The Node class also implements methods used for search of nodes in the tree based on certain criteria. A lambda expression can be passed to methods \textit{findChild} and \textit{findChildren} as argument named \textit{pred}. The lambda expression can contain any properties that uniquely identify nodes, including \textit{name}, \textit{roleName},  \textit{showing} and \textit{visible}. The class also contains action methods that can be performed on nodes without importing other action modules. Verification and identification of shown nodes are easier thanks to method named \textit{blink}. Once the method is called on a certain element, the element is highlighted on the screen for several seconds. This functionality is also part of the Sniff tool where element is highlighted after it is selected in the displayed tree.
 
@@ -195,7 +194,7 @@ The module \textit{dump} contains only one method with the same name, the method
 Finally, the module \textit{rawinput} contains implementation required for generating events from both keyboard and mouse. More complex events simulating keyboard shortcuts, mouse gestures and drag and drop operations are implemented as well.  
 
 
- \begin{figure}[hbt]
+ \begin{figure}[H]
 	\centering
 	\includegraphics[width=1\textwidth]{obrazky-figures/sniff.png}
 	\caption{Sniff utility highlighting icon area in Nautilus File Manager, Screenshot taken from Red Hat Enterprise Linux 8.2}
@@ -208,10 +207,17 @@ Finally, the module \textit{rawinput} contains implementation required for gener
  
  So to conclude this chapter, dogtail is powerful tool for development of automated test cases in GNOME 3 environment. On the other hand, it contains discussed limitations and flaws. Those limitations mustn't come from the dogtail itself, they are either accessibility bugs or bugs in GTK3 framework (non-accessible menu).  
 
-\subsection{Accerciser}
-Accerciser is an interactive accessibility explorer developed in Python. It provides well-arranged graphical frontend for AT-SPI library, hence it can inspect, examine and interact with widgets and also allows developers to verify that their applications are providing correct information to assistive technologies and automated testing frameworks. The default interface has three sections: A tree view with the entire desktop accessible hierarchy and two optional plugin areas. Accerciser has an extensible, plugin-based architecture, most of the features available by default are provided by plugins discussed in next several paragraphs.
+\subsection{The Accerciser}
+The accerciser is an interactive accessibility explorer developed in Python. It provides well-arranged graphical frontend for AT-SPI library, hence it can inspect, examine and interact with widgets. It also serves as a verification tool for developers, to check that their applications are providing correct information to assistive technologies and automated testing frameworks. The~Figure \ref{Accerciser_img} demonstrates the interface with extended features and functions when compared to Sniff. The default interface has three sections: a~tree view with the entire desktop accessible hierarchy and two optional plugin areas. The~Accerciser has an extensible, plugin-based architecture. The most of the features available by default are provided by plugins discussed in next several paragraphs.
 
-The Interface Viewer plugin is an explorer of AT-SPI interfaces provided by each accessible widget of a target application. Once an item is selected, its interfaces are shown with a list of sensitive methods, so all methods are executable. The list contains methods for interaction with an object and various methods for obtaining more information about the object. Accerciser allows to explore the following interfaces:
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\textwidth]{obrazky-figures/accerciser.png}
+	\caption{Accerciser's default configuration, Screenshot taken on Manjaro Linux with GNOME 3.34}
+	\label{Accerciser_img}
+\end{figure}
+
+The Interface Viewer plugin is an explorer of AT-SPI interfaces provided by each accessible widget of a target application. Once an item is selected, its interfaces are shown with a list of sensitive methods. The majority methods are executable. The list contains methods for interaction with an object and various methods for obtaining more information about the object. The Accerciser offers an exploration of the following interfaces:
     \begin{itemize}
         \item Accessible - shows child count (number of child widgets), description, states, relations and other attributes
         \item Application - if implemented (not mandatory), it shows application ID, toolkit and version
@@ -230,19 +236,11 @@ The AT-SPI Validator plugin applies tests to verify the accessibility of a targe
 
 The next plugin is the Event Monitor, which displays AT-SPI emitted events including the filter for several different AT-SPI event classes. The plugin has the ability to monitor only events sourced from selected application or selected accessible (widget). Each event record contains the source and the application.
 
-The Quict Select plugin provides global hotkeys for quickly selecting accessible widgets in Accerciser's Application Tree View, selected widget is highlighted in the target application.
+The Quict Select plugin provides global hotkeys for quickly selecting accessible widgets in the Accerciser's Application Tree View, selected widget is highlighted in the target application.
 
 The API Browser plugin shows interfaces, methods and attributes available on each accessible widgets of a target application, by default it shows only public methods and properties, private methods and properties are hidden until checkbox \textit{Hide Private Attributes} is unchecked.
  
 Finally, plugin IPython Console provides full, interactive Python shell with access to selected accessible widgets of a target application as an pyatspi objects. Any object selected in the the tree view is available in the IPython Console under the symbol \textit{acc}, so the plugin provides an easy way to test and debug code used in test cases.    
-
-\begin{figure}[hbt]
-	\centering
-	\includegraphics[width=1\textwidth]{obrazky-figures/accerciser.png}
-	\caption{Accerciser default configuration, Screenshot taken on Manjaro Linux with GNOME 3.34}
-	\label{Accerciser}
-\end{figure}
-
 
 \section{Covering Limitations of Accessibility and Verification}
 As discussed in aforementioned sections, information provided by accessibility is not flawless, therefore next couple chapters are dedicated to exploration of technologies that might be used to support the accessibility in such cases.
@@ -310,7 +308,7 @@ All applications are open source and are developed by the community of enthusias
 
 \section{Model Extraction}
 
-The model extraction process relies on ATSPI metadata which are provided after start of an application. As mentioned in section \ref{pyatspi}, once the application is running, a tree of widgets is exposed and available for interaction via library pyatspi. The provided representation of the tree itself is not suitable to be directly used as a model of an application, as the implementation contains several restrictions for purposes of this work.
+The model extraction process relies on ATSPI metadata which are provided after start of an application. As mentioned in section \ref{library_pyatspi}, once the application is running, a tree of widgets is exposed and available for interaction via library pyatspi. The provided representation of the tree itself is not suitable to be directly used as a model of an application, as the implementation contains several restrictions for purposes of this work.
 
 The first restriction is represented by nodes/widgets with no functionality nor a way of interaction for the user, e.g.: filler, separator, panel etc. Theoretically, a copy of the three could be created with those nodes filtered out, although in that case the parent-child relation ship in the tree needs to be restored accordingly. This is not possible, since the attributes \texttt{children} and \texttt{parent} in \texttt{Atspi.Accessible} object instance are read-only. The tree also contains properties and methods which are available only during an application runtime, possibly disallowing an access to the properties of an extracted model after application crashes or terminates. 
 
