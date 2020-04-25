@@ -17,19 +17,33 @@ The next chapter is focused on the architecture of accessibility technology for 
 
 Finally, the proposed solution is being discussed. Starting with the extraction of actions and states from a running application with enabled assistive technology to the process of generation of test case files, which will be prepared to be executed repeatedly. Methods for Code coverage analysis will be discussed as well. 
 
-
-
 \chapter{Testing Graphical User Interfaces}
 Graphical user interface (GUI) is an interface that takes advantage of the computer's graphics capabilities to make software easier to use.\cite{guidefinition} Graphical applications are developed using sets of windows and widgets. A widget represents a graphical element describing certain behavior and functionality. User interaction with widgets is generating various events allowing them to perform tasks in different ways while achieving the same goal. Although they improve usability and flexibility, they also represent a challenge for software testing as testers have to decide whether to check all sequences of events or only a subset. The effort required to test the GUIs can be reduced with automated software testing. Even though there was significant progress made in automated testing tools over the last decade, manual testing is still the most common technique in practice. However, with a proper automated GUI testing process, more test cases can be executed regularly and more faults can be found within less time.\cite{patternbasedtesting} Automation and CI-CD system play an essential role in regression testing, especially in the test development phase, when software changes are more frequent. Generally, building GUI test cases involves selecting sequences of GUI events and describing the expected state of the program after event execution.\cite{NguyenBao2014Gait}
 
 Next several sections are dedicated to various testing techniques used to test GUIs. Variations of both manual and automated testing are discussed, followed by examples of tools using them. Throughout the chapter a tested application will be referred to as a system under test (SUT).
-
 
 \section{Random Input Testing}
 The Random input testing technique is also referred to as stochastic testing or monkey testing. The term monkey is mentioned in any form of automated testing performed without any user bias. This method distinguishes 3 types of monkeys who are testing the application by generating random sequences of events from both a keyboard and a mouse. Dumb monkeys do not have any knowledge about the system, nor its state. They are not aware which actions are legal or illegal. The downside is that they cannot recognize a failure when they encounter one. Their only goal is to crash the SUT. Another group, referred to as semi-smart monkeys, can recognize a bug when they see one. The last group are smart monkeys, who have certain knowledge about the application they are testing, obtained from a state table, or a model of SUT. On the other hand, smart monkeys are the most expensive to develop. Despite the fact that a random testing tool has a weak coverage, Microsoft has reported that 10-20\% bugs in their software were discovered by this method.\cite{nyman}
 
 \section{Manual Testing}
 In general, high-level GUI and acceptance tests are being performed manually. Those practices are often inefficient, error-prone, and tedious. Test development tends to be delayed and executed in a hurry during late development stages. Manual tests are pre-defined sets of steps performed on a high level of system abstraction to validate the system against the required specification. However, software is prone to changes, and therefore it needs to be tested regularly against regressions. This leads to excessive costs, since testers have to continuously re-execute test plans throughout development stages.\cite{guitesting}
+
+\section{Test Automation and CI/CD}
+Automated testing solves the major weaknesses of manual testing. The process of automating software testing is similar to a software development process. The goal is to reduce the need for human involvement in repetitive or redundant tasks. Tests that can be automated includes\cite{ci_tests}:
+\begin{itemize}
+    \item functional - testing that operations perform as expected
+    \item regression - testing that the behavior of the system has not changed
+    \item exception or negative - forcing the error conditions on the system
+    \item stress - determining the absolute capacities of the application and operational infrastructure
+\end{itemize}
+
+Implementation of test automation leads to practices like continuous integration (CI) and continuous delivery (CD). Continuous testing goes beyond test automation and bring the testing as close to the software development as possible.
+
+Continuous integration is a coding philosophy and set of practices that drive the development teams to implement small changes and check the version control repositories frequently. The majority of modern applications require code development in different platforms and tools, thus the team needs a mechanism to integrate and validate the changes. The goal of the CI is to establish a consistent and automated way to build, package, and test applications. With consistency in the integration process in place, teams are more likely to commit code and change more frequently which leads to better collaboration and software quality.
+
+Continuous delivery starts where continuous integration ends. CD automates the delivery of applications to selected infrastructure environments. So it performs necessary calls to predefined sets of services to ensure that applications are deployed.
+
+The common goal for CI/CD is to deliver quality software and code to users. Continuous testing is often implemented as a set of automated regression, performance, and other tests that are executed in CI/CD pipelines. Automated testing frameworks help quality assurance engineers define, execute and automate various types of tests that can help development teams know whether a software build passes or fails. The most CI/CD tools let developers kick off a build on-demand, triggered by code commit in the version control repository, or on a defined schedule. The regression tests are an essential part of the CI/CD pipeline that directly informs developers about effects of their changes on previously tested and stable functions of the application.\cite{CI}  
 
 \section{Black Box Testing}
 The technique handles the software as a black box. A tester has no knowledge about the implementation of the software. The design of the test cases is only based on the specifications and requirements. Tests usually involve a set of both valid and invalid inputs with predictable outputs. Black box testing plays a significant role in testing as it is evaluating the overall functionality of the software.\cite{white_black}
@@ -106,6 +120,7 @@ Additional configurations may be required for applications written in other fram
 
 The widget is accessible, if a developer uses any GTK3/GNOME widget and follows the general accessibility guidelines\footnote{https://developer.gnome.org/accessibility-devel-guide/stable/gad-coding-guidelines.html.en} with properly implemented ATK interfaces. Considering that the stock GTK3/GNOME toolkit widgets have implementations of these interfaces provided, new widgets will inherit the functionality and gain suitable accessibility support as well. The default implementation of ATK interfaces might be altered by applications, as developers can enrich their descriptions of widgets and improve the overall user experience in special cases, e.g. when a widget is used for some less expected purposes or the default description is too general. The ATK provides a set of functions to achieve this along with the ability to make any custom component accessible\footnote{https://developer.gnome.org/accessibility-devel-guide/stable/gad-custom.html.en}.\cite{accessibleWidgets}
 
+\newpage
 \section{Library Pyatspi}\label{library_pyatspi}
 Package pyataspi is a Python wrapper around AT-SPI's C implementation, which loads the Accessibility typelib and imports the classes implementing AT-SPI interfaces.\cite{pyatspi}
 
@@ -130,7 +145,14 @@ Library pyatspi is an open-source project available for most Linux distributions
 \section{Exploring and Debugging The Accesibility}
 Currently, there are several tools available for exploration and debugging accessibility features not only on the GNOME desktop. 
 \subsection{Library Dogtail}\label{sniff_accerciser}
-Dogtail is an open-source GUI test framework written in Python implemented as a library around pyatspi. Several modules implements a higher level of API to simplify work and interaction with accessible objects during test development. The tool offers less complex functionality, containing tree view of objects with their basic attributes\cite{dogtail_doc}. Package dogtail also includes a GUI tool Sniff, similar to the Accerciser application described in the next section. The most important dogtail modules are described in several next paragraphs.
+Dogtail is an open-source GUI test framework written in Python implemented as a library around pyatspi. Several modules implements a higher level of API to simplify work and interaction with accessible objects during test development. The tool offers less complex functionality, containing tree view of objects with their basic attributes\cite{dogtail_doc}. Package dogtail also includes a GUI tool Sniff (Figure \ref{sniff}), similar to the Accerciser application described in the next section. The most important dogtail modules are described in several next paragraphs.
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=1\textwidth]{obrazky-figures/sniff.png}
+	\caption{Sniff utility highlighting icon area in Nautilus File Manager, Screenshot taken from Red Hat Enterprise Linux 8.2}
+	\label{sniff}
+\end{figure}
 
 The module \textit{tree} contains the most important class \textit{Node}, instances of the class represent elements of the desktop user interface. All elements are gathered to the tree structure, representing all applications starting with the root element (desktop). The class is implemented as a mixin for Accessible and various Accessible interfaces and is an important unit for its subclasses, namely \textit{Application}, \textit{Root} and \textit{Window}. The Node class also implements methods used for search of nodes in the tree based on certain criteria. A lambda expression can be passed to methods \textit{findChild} and \textit{findChildren} as argument named \textit{pred}. The lambda expression can contain any properties that uniquely identify nodes, including \textit{name}, \textit{roleName},  \textit{showing} and \textit{visible}. The class also contains action methods that can be performed on nodes without importing other action modules. Verification and identification of shown nodes are easier thanks to the method named \textit{blink}. Once the method is called on a certain element, the element is highlighted on the screen for several seconds. This functionality is also part of the Sniff tool where an element is highlighted after it is selected in the displayed tree.
 
@@ -138,12 +160,6 @@ The module \textit{dump} contains only one method with the same name, the method
 
 Finally, the module \textit{rawinput} contains the implementation required for generating events from both keyboard and mouse. More complex events simulating keyboard shortcuts, mouse gestures, and drag and drop operations are implemented as well.  
 
- \begin{figure}[H]
-	\centering
-	\includegraphics[width=1\textwidth]{obrazky-figures/sniff.png}
-	\caption{Sniff utility highlighting icon area in Nautilus File Manager, Screenshot taken from Red Hat Enterprise Linux 8.2}
-	\label{sniff}
-\end{figure}
 
  Testing Dogtail has proven availability for many Linux distributions through their package repositories, specifically Fedora 32, Red Hat Enterprise Linux 8.2 and Manjaro 18 with GNOME 3.34 (Archlinux). It is also available as a Pypi Python package and according to information in it's official Gitlab repository should work not only for GTK3 application but also for application written in QT and KDE. 
  
@@ -195,7 +211,7 @@ by a vast community of contributors around the world. The library is used extens
 
 From the rich availability of algorithms provided, the image recognition algorithm can be used to either locate or verify the presence of an element on the screen. This approach would require to have a set of images containing elements prepared in advance, then it can be used to find the image location on the screenshot of the screen taken during a test run. Compared to verification of the node only via accessibility, this approach would also verify that the element is properly rendering on screen and the shown result is an element that is shown to the user. An additional benefit is the verification of text formatting and colors. On the contrary, there this process requires additional manual work of taking images, labeling them, and associating them with certain test scenarios. Count of elements displayed on the screen multiple times creates another parameter that would require manual maintenance. The most common example of such cases are buttons labeled either OK or Cancel as they are used in many applications.
 
-Another possible approach is to use the shape recognition algorithm which can locate shapes like circles, rectangles, and many other common shapes. From the development perspective this would be easier to maintain as there is no requirement for images prepared in advance. Frequent application changes during software development may also cause that tests based on image matching can be easily outdated. This factor forces testers to revisit test suites, therefore the efficiency of automated tests deteriorates. It can also help with the widget location in cases where accessibility is reporting wrong coordinates. On the other hand, locating the right widget in cases when several similarly shaped ones are located on the screen at the same time will yield very inconsistent results.
+Another possible approach is to use the shape recognition algorithm which can locate shapes like circles, rectangles, and many other common shapes. From the development perspective this would be easier to maintain as there is no requirement for images prepared in advance. Frequent application changes during software development may also cause that tests based on image matching can be easily outdated. This factor forces testers to revisit test suites, therefore the efficiency of automated tests deteriorates. It can also help with the widget location in cases where accessibility is reporting wrong coordinates. On the other hand, locating the right widget in cases when several similarly shaped ones are located on the screen at the same time will yield very inconsist
 
 
 \subsection{OCR}\label{OCR_section}
@@ -247,7 +263,6 @@ All applications are open source and are developed by the community of enthusias
 	\caption{Architecture of Proposed Solution}
 	\label{Diagram}
 \end{figure}
-
 
 \section{Model Extraction}
 The model extraction process relies on AT-SPI metadata which are provided after the start of an application. As mentioned in section \ref{library_pyatspi}, once the application is running, a tree of widgets is exposed and available for interaction via library pyatspi. The provided representation of the tree itself is not suitable to be directly used as a model of an application, as the implementation contains several restrictions for purposes of this work.
@@ -311,7 +326,7 @@ There are several factors to be monitored during the runtime of the tested appli
 Furthermore, is it also necessary to perform certain checks during the time an application is being interacted with. Therefore, every tested application will be run as a subprocess, which enables us to capture the output generated by tested applications to standard streams (\textit{stdout, stderrr}). Once the application has been terminated, it also allows us to check the return codes. The implementation relies on python's standard library \texttt{subprocess}. The output generated to the standard stream is checked for errors defined in the designated configuration file. In case of error throughout the generation process, an error message is printed immediately to warn about the possible bug in the tested application. The warning contains the number identifying the test in which the error occurred, a full error message, and a return code, if available. All other captured messages e.g. warnings or deprecation messages from the GTK framework are saved to one log file, in a folder where the tests are generated. The messages are being appended, so the log file can be checked at any time during the generation process. Every line contains the test number, so it can be easily determined when the message occurred and match it with a reproducer from the test case.
 
 \subsection{Flatpak applications}
-Flatpak is a technology for building and distributing desktop applications on Linux\footnote{\url{https://flatpak.org/}}. Flatpak aims to solve the problem with cross-platform distribution packaged on Linux, thus avoiding problems with different package managers used across Linux distributions. Applications, or so-called flatpaks, can be delivered to users regardless of the lifecycle of Linux distribution. The system implements a set of sandboxing technologies, to isolate flatpaks from each other and the system, thus providing security benefits to users.\cite{flatpak}
+Flatpak\footnote{\url{https://flatpak.org/}} is a technology for building and distributing desktop applications on Linux. Flatpak aims to solve the problem with cross-platform distribution packaged on Linux, thus avoiding problems with different package managers used across Linux distributions. Applications, or so-called flatpaks, can be delivered to users regardless of the lifecycle of Linux distribution. The system implements a set of sandboxing technologies, to isolate flatpaks from each other and the system, thus providing security benefits to users.\cite{flatpak}
 
 The majority of GNOME applications are also available through flatpak. A dedicated flatpak repository \textit{Nightly GNOME Apps} contains the latest development versions of GNOME applications. These applications can be installed alongside their stable versions. This gives us the potential to test the application much sooner before they are added to distributions and available for testing. This is a benefit behind the integration of flatpak support to this work. The only limitation is a fact, that a tested flatpak must be developed in the GTK framework with the accessibility support. 
 
