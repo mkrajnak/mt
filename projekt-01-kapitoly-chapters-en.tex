@@ -371,7 +371,6 @@ The majority of GNOME applications are also available through flatpak. A dedicat
 
 There are several differences in the runtime perspective between flatpaks and classic applications. Each application has a unique name, e.g.: \texttt{org.gnome.gedit}. Flatpaks are not available through a single executable binary. Every operation with flatpak has to be done via \texttt{flatpak} command, including starting, killing, installing, updating, and downgrading flatpaks. Therefore, a new class \texttt{FlatpakApp} was implemented to manage the runtime of the flatpak applications. The class diagram shown in Figure \ref{test_gen}. The \texttt{FlatpakApp} depends on the \texttt{Flatpak} class from the qecore module. The class \texttt{Flatpak} depends on the {Application} class and it re-implements the methods that are critical for retrieving information about the tested flatpak application. The implementation of \texttt{Flatpak} class is also required for the execution of tests for flatpak application, so it was contributed to qecore project\footnote{\url{https://gitlab.com/dogtail/qecore/-/blob/master/qecore/flatpak.py}}.
 
-
 \section{Generation process}
 The input to the test generator data about the tested application entered in the \texttt{apps.yaml} file. The output is a project structure containing generated test cases and other files required for test execution. The test generation process can be divided into multiple parts and is described throughout the next sections.
 
@@ -379,7 +378,7 @@ The input to the test generator data about the tested application entered in the
 Before generation process starts, a proper project structure must be created, so the generated test cases will be ready for export and immediate execution. Furthermore, there are several factors in GNOME desktop environment, that needs to be addressed when tests will be both generated and executed. The library aims to create clean environment with focus on testing applications. 
 
 
-The development of this project also lead to a contributions submitted to the qecore project. The main goal was achieved in creating a better integration for flatpak applications. Other submitted changes were delivering minor fixes\footnote{\url{https://gitlab.com/dogtail/qecore/-/merge_requests/24}}\footnote{\url{https://gitlab.com/dogtail/qecore/-/merge_requests/26}} and new class parameters allowing to test LibreOffice applications\footnote{\url{https://gitlab.com/dogtail/qecore/-/merge_requests/25}}.  
+The development of this project also lead to a contributions submitted to the qecore project. The main goal was achieved in creating a better integration for flatpak applications. Other submitted changes were delivering minor fixes\footnote{\url{https://gitlab.com/dogtail/qecore/-/merge_requests/24}}\textsuperscript{,}\footnote{\url{https://gitlab.com/dogtail/qecore/-/merge_requests/26}} and new class parameters allowing to test LibreOffice applications\footnote{\url{https://gitlab.com/dogtail/qecore/-/merge_requests/25}}.  
 
 \begin{figure}[hbt]
 	\centering
@@ -393,6 +392,7 @@ The development of this project also lead to a contributions submitted to the qe
 The main goal of the OCR integration in this work is to provide an additional level of verification of string values presented by applications and thus not rely purely on AT-SPI. However, the integration of the OCR into generated test cases has to be reliable to avoid false-positive results from the tests. Therefore, the integration of Tesseract has to be properly tested and the implementation has to contain image preprocessing optimizations and configuration to achieve specified goals.
 Tesseract offers several options that allow to optimize test detection and analysis. One of them is  the definition of the recognized language. It is assumed that most of the tested applications will use the English language and therefore, the dataset trained for the English language is used.
 
+\subsection{Screenshot Preprocessing and Optimizations}
 As discussed in \ref{OCR_section}, Tesseract is less prone to errors when operating with images containing black text on a white background. Therefore the safest option, is a conversion of images with thresholding to binary colors (black and white). It also has to be considered that some applications are using darker themes or contain parts with different color schemes. To avoid problems with text detection connected to this, the string is always searched in two images. The first one is a binarized copy of the original image, the second one is a copy of the binarized scale image with inverted colors. This ensures that the searched string is found on the screen, if present, regardless of a theme set in an application and prevents false-positive results during the test execution. An example is shown in Figure \ref{ocr_conversion}, containing 3 images, ordered from the top: an original image, a binarized image, and an inverted binarized image. The Listings \ref{OCR_text2} is showing the result of the character recognition when the image contains black text on a white background. The result contains almost all strings shown on the screen with some random characters created as an attempt to read icons located in the right top corner of the window. When compared to Listings \ref{OCR_text1}, where the source image contains white text on a black background, it proves an increase of the efficiency achieved after the optimization. The results obtained from the original image are quite similar to the results in Listing \ref{OCR_text1}. The conversion is implemented via \texttt{threshold} method from the OpenCV module.
 
 \begin{figure}[H]
@@ -421,6 +421,20 @@ Further experiments have shown additional issues with text formatting and recogn
 
 The Tesseract has shown occasional difficulties with recognition of similarly looking letters. The most affected character was \textbf{I} exchanged for \textbf{1}, followed by \textbf{S} exchanged for \textbf{5}. Despite these occasional cases, the implementation works quite reliably both during the test generation process and the execution process. Nevertheless, the time consumed by taking screenshots during the generation process is significant. Therefore, the developed tool has the ability to disable the generation of the OCR steps during the generation of test cases through the command line parameter \texttt{-{}-disable-OCR}. If the generated test cases already contain steps performing OCR checks and are intended to be executed without them, the tests can be executed with the shell variable \texttt{OCR=False}. The defined variable will cause skipping of the OCR checks, although they will still be shown in the test logs as executed. This is caused by the limitation of the behave framework as it only allows to skip whole test scenarios. The test results executed with the variable will contain a warning message about skipped OCR steps.
 
+\subsection{Implemented Steps}
+The results obtained from experiments with the OCR were implemented to a single behave step. The step contains a string variable that should be found on the screen at some moment during the test execution. The process involves taking a screenshot via \texttt{gnome-screenshot} utility. It continues with image preprocessing and extraction of the text from two variants of images. Finally, an assertion is made to confirm the presence of the string on the screen. The Listing \ref{ocr_test} contains a test case generated for \textit{Gedit} flatpak, in this case the OCR should confirm the presence of the \textit{Save} button on the screen. The introduced optimizations from the last section should help to avoid false-positive results. However, if the OCR fails to find the string on the screen, the error message printed to a log will contain all the extracted text. This should help the testers with easier identification of false-positives.
+
+\begin{lstlisting}[language=Gherkin,caption={Test case demonstrating the OCR integration in test cases},label={ocr_test}]
+    @18_Save
+    Scenario: org.gnome.gedit: 18_Save
+      * Start: "org.gnome.gedit" via command in session
+      * State: "push button" "Save" "showing" is "True"
+      * OCR: "Save" is shown on the screen
+      * Action: "click" "Save" "push button"
+      * State: "file chooser" "Save As" is shown
+\end{lstlisting}
+
+
 \section{Test Execution}
 The result of the generation process is a folder structure containing generated test cases, configuration files, and scripts for execution in the CI environment. Generated test cases are located in in file named \texttt{generated.feature}, the file contains all the test cases divided into so-called scenarios. Each scenario has a unique name starting with character \texttt{@}, thus allowing a single test execution if required. The test can be executed also at once by simply executing command \texttt{behave} in the generated project folder. The test are also respecting the cleanup commands which are set in \texttt{apps.yaml}. The cleanup is always executed after the finish of the test, regardless of the result of the executed tests. Behave either prints steps from a test scenario to standard output or can generate an HTML log. This log format is more suitable for examination of the results executed in the CI environment. Thanks to the setup done by the \textit{qecore} library, the test reports have embedded logs, videos from the test runs, and a screenshot generated in a moment, when the test case fails. 
 An example of the generated test case scenario is available ....
@@ -430,14 +444,6 @@ An example of the generated test case scenario is available ....
 \chapter{Testing en results}
 test coverage, node coverage, action coverage
 
-\begin{lstlisting}[language=Gherkin,caption={.feature file example with a test case},label={feature}]
-Feature: Start and stop baobab in different ways
-
-  @startViaCommand
-  Scenario: Start via command
-    Given Start baobab via command in session
-    Then baobab should start
-\end{lstlisting}
 
 
 
