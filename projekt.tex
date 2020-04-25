@@ -68,9 +68,65 @@
 % to avoid unnecessary replacements in the API descriptions etc.
 \csdoublequotesoff
 
+
+
+% added by mkrajnak
 \usepackage{url}
 \usepackage{dirtree}
+\newcommand\YAMLcolonstyle{\color{red}\mdseries}
+% \newcommand\YAMLkeystyle{\color{black}\bfseries}
+\newcommand\YAMLvaluestyle{\color{blue}\mdseries}
+%   added b mkrajnak
+\lstdefinelanguage{Gherkin}{
+	morekeywords = {
+		Given,
+		When,
+		Then,
+		And,
+		Scenario,
+		Feature,
+		But,
+		Background,
+		Scenario Outline,
+		Examples
+	},
+	sensitive=true,
+	morecomment=[l]{\#},
+	morestring=[b]",
+	morestring=[b]',
+	numbers=left,
+	frame=tb
+}
+  
+  % forked from https://tex.stackexchange.com/questions/152829/how-can-i-highlight-yaml-code-in-a-pretty-way-with-listings
+\lstdefinelanguage{yaml}{
+  keywords={true,false,null,y,n},
+  keywordstyle=\color{darkgray}\bfseries,
+%   basicstyle=\YAMLkeystyle,                                 % assuming a key comes first
+  sensitive=false,
+  numbers=left,
+  frame=tb,
+  comment=[l]{\#},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{purple}\ttfamily,
+  stringstyle=\YAMLvaluestyle\ttfamily,
+  moredelim=[l][\color{orange}]{\&},
+  moredelim=[l][\color{magenta}]{*},
+  moredelim=**[il][\YAMLcolonstyle{:}\YAMLvaluestyle]{:},   % switch to value style at :
+  morestring=[b]',
+  morestring=[b]",
+  literate =    {---}{{\ProcessThreeDashes}}3
+                {>}{{\textcolor{red}\textgreater}}1     
+                {|}{{\textcolor{red}\textbar}}1 
+                {\ -\ }{{\mdseries\ -\ }}3,
+}
 
+\lstset{
+  frame=tb,
+  numbers=left,
+  xleftmargin=3.5ex,
+}
+% added by mkrajnak
 
 % =======================================================================
 % balíček "hyperref" vytváří klikací odkazy v pdf, pokud tedy použijeme pdflatex
@@ -332,4 +388,6 @@ I have listed all the literary sources, publications and other sources, which we
   % Compilation piecewise (see above, it is necessary to uncomment it)
   %\subfile{projekt-30-prilohy-appendices}
   
+  
 \end{document}
+
