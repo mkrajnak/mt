@@ -375,7 +375,7 @@ The implementation for the non-flatpak applications is encapsulated in the class
 The input to the test generator data about the tested application entered in the \texttt{apps.yaml} file. The output is a project structure containing generated test cases and other files required for test execution. The test generation process can be divided into multiple parts and is described throughout the next sections.
 
 \subsection{Generating an Application Project and Setup}
-Initially, the test generator checks the availability of the record about a tested application in the configuration file \texttt{apps.yaml}. Subsequently, it creates a sub-folder with the name of the application where generated content will be placed. Additionally, predefined source files with the implementation of steps (required by the behave framework) are copied to the folder structure with scripts and other files that are necessary for the test execution. The Figure \ref{project_folder} demonstrates the structure after the test generation. The folder features contains the test cases written in the file \texttt{generated.feature}. The file \texttt{environment.py} contains setup required for test execution, it imports the setup from the \texttt{qecore} library and creates an instance of either the \texttt{Flatpak} or the \texttt{Application}. The type of the application (flatpak or application) and the parameters for the class instance are extracted from the entry in the configuration file \texttt{apps.yaml}. The folder steps contains source files that implements the steps which are performed in the generated test cases. The module \texttt{ocr\_steps.py} contains only one behave step which should be used for the verification of the string on the screen. The module \texttt{steps.py} contains implementation of seven behave steps. Their decorators are written as generally as possible to keep the codebase minimal but still able to execute any action or verify any state of a node. The file \texttt{gnome-terminal.log} aggregates log messages produced by a tested application throughout the test generation process. The \texttt{mapper.yaml} file contains list of test cases with other data required for the CI execution. The file \texttt{requirements.py} contains all python dependencie that needs to be installed to execute the test cases. Finally, the \texttt{runtest.sh} is wrapper script for execution of every test case. 
+Initially, the test generator checks the availability of the record about a tested application in the configuration file \texttt{apps.yaml}. Subsequently, it creates a sub-folder with the name of the application where generated content will be placed. Additionally, predefined source files with the implementation of steps (required by the behave framework) are copied to the folder structure with scripts and other files that are necessary for the test execution. The Figure \ref{project_folder} demonstrates the structure generated for the application \textit{GNOME Terminal}.
 
 \begin{figure}[H]
 \dirtree{%
@@ -390,10 +390,30 @@ Initially, the test generator checks the availability of the record about a test
 .2 mapper.yaml.
 .2 requirements.txt.
 .2 runtesh.sh.
+.2 cleanup.sh.
 }
 \caption{Framing a dirtree-generated figure}
 \label{project_folder}
 \end{figure}
+
+The sub-folder named \texttt{features} contains the test cases written in the file \texttt{generated.feature}. The file contains a single so-called \textit{Feature} that contains all generated test cases. Test cases are composed of a tag, a brief description of the test case, and so-called \textit{steps}. The tag is a unique identifier of the test case, thus allow single test case execution, if required. The description should briefly describe, what should be achieved when the test case is executed. The steps are composed of multiple actions and assertions described in a human-readable language. Successful execution of all steps evaluate the test cases as passed. Otherwise, the result is a fail.
+
+The file \texttt{environment.py} contains the setup required for the test execution. It contains 3 functions used by the \textit{behave} framework to set up or restore the required environment during the test execution. The \texttt{before\_all} function is run once before the execution of the test cases. It imports the setup from the \texttt{qecore} library and creates an instance of either the \texttt{Flatpak} or the \texttt{Application}. The type of the application and the parameters for the class instance are extracted from the entry in the configuration file \texttt{apps.yaml}. The \texttt{before\_scenario} function is executed before every test cases (scenario). It contains an invocation of the method from the \textit{qecore} that should set the testing environment to the default state and prepare for testing. Additionally, it executes the \texttt{cleanup.sh} script with a custom per-application cleanup defined in \texttt{apps.yaml}. The \texttt{after\_scenario} function is called after the execution of every test case, regardless of its results.
+
+The folder \texttt{steps} contains source files that implement the steps that are performed in the generated test cases. The implementation of steps is divided into two files. The module \texttt{ocr\_steps.py} contains only one behave step which encapsulates the implementation and optimization be used for the verification of the string on the screen. The module \texttt{steps.py} contains general implementation of steps. The steps are function implemented in python with the \texttt{step} decorator from the behave framework. The decorators serve as a wrapper to call the python functions from the \texttt{.feature} files. So in the case of this project, the steps in the test cases are function calls to the functions defined in these modules. The definition of the \texttt{@step} decorator (Code Listing \ref{step_definition}) contains variables, thus allowing us to keep the code base as minimal as possible.
+
+
+\begin{lstlisting}[style=mypython, caption={Test}, label={step_definition}]
+@step('State: "{roleName}" "{name}" "{prop}" is "{state}"')
+def assert_state(ctx, name, roleName, prop, state):
+    node = ctx.app.instance.child(name, roleName)
+    focus_node(node)
+    assert hasattr(node, prop), f'Obj: {node} is missing attribute {prop}'
+    prop_value = f'{getattr(node, prop)}'
+    assert state == prop_value, f'Expected: {state}, Got: {prop_value}'
+\end{lstlisting}
+
+The file \texttt{gnome-terminal.log} aggregates log messages produced by a tested application throughout the test generation process. The \texttt{mapper.yaml} file contains a list of test cases with other data required for the CI execution. The file \texttt{requirements.py} contains all python dependencies that need to be installed to execute the test cases. Finally, the \texttt{runtest.sh} is a wrapper script for execution of test cases.
 
 \subsection{Generating test cases}
 
