@@ -441,10 +441,9 @@ If the return code does not contain the value 0, the generator raises the error,
 
 In some cases, the occurrence of an error does not mean that the application crashes. Therefore, the generator checks the log for known errors after every executed action regardless of the state of the application. The list of the messages that are being checked is stored in the file \texttt{errors.py}, a new errors message can be appended to the list at any time. The list currently contain message that previously occurred in bugs related to \textit{GNOME} applications.
 
-new app detection
-new window detection
+Upon a successful execution of the action, followed by no errors detected in the log and application still being run means that the action could have changed the state of the application. Initially, the generator checks whether the action triggered the execution of a new application. The detection is achieved through the symmetrical difference computed on two sets, the first one contains the list of running applications before the action was executed, the second one holds the list of application after the execution. Both list are shallow copies, so the generator does not need to compare an entire tree for each application. The generator expects that the application is also exposed to the accessibility bus. If that is a case, the generator generates the assertion implying that the applied sequence lead to the start of a new application.
 
-
+If the previously described effort failed, the generator proceeds to search for the changes within the tree of the tested application. The implementation takes advantage of the method \texttt{get\_node\_list} from the class \texttt{GTree}. The method return all nodes from the tree instance in one \textit{list}. The list is converted to a set, and similarly to the process of detection a new application, it calculates the symmetric difference between sets captured before and after the executed action. 
 
 
 \begin{center}
@@ -564,10 +563,7 @@ The report not only serves as a feedback from the generator about potential issu
 The test generator itself is a piece of software as well. It is designed to work with as many application as possible, therefore, the implementation is as general as possible. If a tested application reveals flaws that may be fixed within the test generator. The fixes must maintain the approach that the implementation has to be as general as possible, thus they will not affect the other components. Therefore, of the fix is too application specific, the effort that needs to be done to include the the fix in the test generator should not be greater than developing a custom test case.
 
 \section{Code Coverage}
-The another approach can be based on evaluating the percentage of model, that has been covered by the generated tests. In that case, two values need to be measured separately, to be specific a percentage of actions and a percentage of nodes covered by the generated tests.
-
-
-Another possibility is to use a tool \verb|gcov|, which is standart part of the GNU development tools. The purpose of the tool is Code Coverage Analysis and it was designed to find dead or unexecuted code. Code coverage analysis can be characterized by the following steps: 
+Another possibility is to use a tool \verb|gcov|, which is a standard part of the GNU development tools. The purpose of the tool is Code Coverage Analysis and it was designed to find dead or unexecuted code. Code coverage analysis can be characterized by the following steps: 
 \begin{enumerate}
   \item Find the areas of a program not exercised by the test suite.
   \item Create additional test cases to exercise the dead code, thereby increasing code coverage.
@@ -576,6 +572,7 @@ Another possibility is to use a tool \verb|gcov|, which is standart part of the 
 
 To obtain a measurement of the code coverage, it's required to compile the application with \verb|gcc| and two extra parameters \verb|-fprofile-arcs| and \verb|-ftestcoverage|. Running the compiled binary with a \verb|gcov| tool will yield a percentage of the executed code located in source file. Measurements can be obtained for any software written in C/C++.\cite{gcov}
 
+According to the GTK website\footnote{\url{https://www.gtk.org/}}, the framework supports JavaScript, Python, Rust, Vala, C, and Perl. The \verb|gcov| method of measuring the test coverage is only possible for C and Vala.    
 Comparing results measured by the \verb|gcov| should provide a suitable method for evaluating results achieved by the generated tests or to compare multiple methods of test generation. However, event coverage should be more important for GUI applications.
 
 
