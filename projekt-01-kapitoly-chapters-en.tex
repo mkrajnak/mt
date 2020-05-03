@@ -418,16 +418,39 @@ def assert_state(ctx, name, roleName, prop, state):
 The file \texttt{gnome-terminal.log} aggregates log messages produced by a tested application throughout the test generation process. The \texttt{mapper.yaml} file contains a list of test cases with other data required for the CI execution. The file \texttt{requirements.py} contains all python dependencies that need to be installed to execute the test cases. Finally, the \texttt{runtest.sh} is a wrapper script for execution of test cases.
 
 \subsection{Generating test cases}
-The test generator implementation is encapsulated in the class \texttt{TestGen} (class diagram in the Figure \ref{test_gen}). The generator starts by parsing the parameters located in the \texttt{apps.yaml} file. There are also several configurable command-line parameters that will be discussed throughout the next section. Based on the parameters, the instance of either the \texttt{App} or the \texttt{FlatpakApp} is created. The generator then creates a copy of the default project structure and inject the files inside the project structure with values that corresponds to the application that is going to be tested (Figure  \ref{project_folder}). Namely, the files \texttt{environment.py}, \texttt{mapper.yaml}, and \texttt{cleanup.sh} contain placeholders (tags) that are replaced. Just note that no python code is being generated during the process, the default project already contains all the predefined \textit{behave} steps. 
+The test generator implementation is encapsulated in the class \texttt{TestGen} (class diagram in the Figure \ref{test_gen}). The generator starts by parsing the parameters located in the \texttt{apps.yaml} file. There are also several configurable command-line parameters that will be discussed throughout the next section. Based on the parameters, the instance of either the \texttt{App} or the \texttt{FlatpakApp} is created. 
+
+The generator then creates a copy of the default project structure and inject the files inside the project structure with values that corresponds to the application that is going to be tested (Figure  \ref{project_folder}). Namely, the files \texttt{environment.py}, \texttt{mapper.yaml}, and \texttt{cleanup.sh} contain placeholders (tags) that are replaced. Just note that no python code is being generated during the process, the default project already contains all the predefined \textit{behave} steps.
+
 % duplicit node renaming
+The next paragraphs are dedicated to the details of the generation algorithm. The Algorithm \ref{test_gen_algorithm} contains a shorter version written in a pseudocode. 
 The generator proceeds with a first start of the application and extracts the the AT-SPI tree of the application instance through the \texttt{dogtail}. Then, a writable copy of the tree is created through the \texttt{GTree} instance. The action-less nodes are removed the placed in the new instance of the \texttt{TestTree} class. The application is terminated and the test cases are derived from the test tree through the class method \texttt{test\_sequences}. The method returns a list that contains sequences or a list of actions for every test case. The method iterates through all the end leafs in the tree and creates a list of nodes that compose a path to the root of the tree. In the end, the list is reversed and it contains a path that should be followed by the test case. At this point, a test sequence does not represent a whole test case. The whole test case is created by applying the test sequence on the live instance of the application. 
 
-The application is terminated and the execution of the test sequences can start. From this point the generator works with 3 instances of the tree: the current running application instance obtained through the \textit{dogtail}, the instance of the class \texttt{Gtree}, the instance of the class \texttt{TestTree} or so-called model used to derive test.
+The application is terminated and the execution of the test sequences can start. From this point the generator works with 3 instances of the tree: the current running application instance obtained through the \textit{dogtail}, the instance of the class \texttt{Gtree}, the instance of the class \texttt{TestTree} or so-called model used to derive the tests.
 % online testing
 % graph
-The test generator than start to iterate over the extracted test sequences, monitors the application, execute actions and generates steps and assertions that are then put together in behave scenarios. Every test sequence has a newly started instance of the application, so every scenario begins with a step that starts the application. The step contains an assertion to make sure that the application started and is ready for the interaction. The generator creates a copy of the list containing the applications that are currently available through the AT-SPI. Another copy of the currently available nodes in the current application. Then it pops the first node from the action sequence, uses the metadata to locate the same node within the currently running instance of the application, and executes the action associated with the given node. The execution of the action is followed by several checks performed on the current instance. The checks calculates the symmetric difference between the copies of the tree obtained before and after the action is executed.  
+The test generator then starts to iterate over the extracted test sequences, monitors the application, executes actions and generates steps and assertions that are then put together in \textit{behave} scenarios. 
 
+Every iteration over the test sequences has a newly started instance of the application, so every scenario begins with a step that starts the application. The step contains an assertion to make sure that the application started and is ready for the interaction. The generator stores a shallow copy of the list containing the applications that are currently available through the AT-SPI. In another copy, it stores the currently available nodes of the tested application. Then, it pops the first node from the action sequence, uses the metadata to locate the same node within the currently running instance of the application, and executes the action associated with the given node. The execution of the action is followed by several checks performed on the current instance.
+
+Initially, the generator check whether the application is still running by retrieving the application instance from the accessibility tree. If the application instance is no longer present, there are two possibilities. The application was intentionally terminated by the executed action or the application crashed. Since the application is being run a in a subprocess, The decision which of these two options is true is made by the examination of the generated logs (\textit{stderr, stdout}) and the return code of the terminated application process.
+
+If the application was terminated and the return code was 0, the test generator append a new step to the test case. The steps asserts after after the actions in the test case the application is no longer running (Quit/Exit) button. 
+
+If the return code does not contain the value 0, the generator raises the error, prints the reproducer, the return code and the content of the obtained logs. If possible, the generator proceeds to the next test case. 
+
+In some cases, the occurrence of an error does not mean that the application crashes. Therefore, the generator checks the log for known errors after every executed action regardless of the state of the application. The list of the messages that are being checked is stored in the file \texttt{errors.py}, a new errors message can be appended to the list at any time. The list currently contain message that previously occurred in bugs related to \textit{GNOME} applications.
+
+new app detection
+new window detection
+
+
+
+
+\begin{center}
 \begin{algorithm}[H]
+\caption{Test generation algorithm pseudocode}
+\label{test_gen_algorithm}
 \SetAlgoLined
 \KwData{Running application exposed to the accessibility bus}
 \KwResult{Test Cases}
@@ -464,9 +487,8 @@ The test generator than start to iterate over the extracted test sequences, moni
   }
  }
  }
- \caption{Test generation algorithm}
- \label{test_gen_algorithm}
 \end{algorithm}
+\end{center}
 
 \section{OCR integration}
 The main goal of the OCR integration in this work is to provide an additional level of verification of string values presented by applications and thus not rely purely on AT-SPI. However, the integration of the OCR into generated test cases has to be reliable to avoid false-positive results from the tests. Therefore, the integration of Tesseract has to be properly tested and the implementation has to contain image preprocessing optimizations and configuration to achieve specified goals.
