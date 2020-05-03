@@ -522,13 +522,47 @@ The results obtained from experiments with the OCR were implemented to a single 
 
 % implementation and testing, running in a VM and stuff
 
-\section{Test Execution}
-The result of the generation process is a folder structure containing generated test cases, configuration files, and scripts for execution in the CI environment. Generated test cases are located in the file named \texttt{generated.feature}. The file contains all the test cases divided into so-called scenarios. Each scenario has a unique name starting with character \texttt{@}, thus allowing a single test execution if required. The test can be executed also at once by simply executing command \texttt{behave} in the generated project folder. The test are also respecting the cleanup commands which are set in \texttt{apps.yaml}. The cleanup is always executed after the finish of the test, regardless of the result of the executed tests. Behave either prints steps from a test scenario to standard output or can generate an HTML log. This log format is more suitable for examination of the results executed in the CI environment. Thanks to the setup done by the \textit{qecore} library, the test reports have embedded logs, videos from the test runs, and a screenshot generated in a moment, when the test case fails. 
-
 % An example of the generated test case scenario is available ....
 
-\chapter{Testing en results}
-test coverage, node coverage, action coverage
+\chapter{Testing and Results}
+The result of the generation process is a folder structure containing generated test cases, configuration files, and scripts for execution in the CI environment. Generated test cases are located in the file named \texttt{generated.feature}. The file contains all the test cases divided into so-called scenarios. Each scenario has a unique name starting with character \texttt{@}, thus allowing a single test execution if required. The test can be executed also at once by simply executing command \texttt{behave} in the generated project folder. The test are also respecting the cleanup commands which are set in \texttt{apps.yaml}. The cleanup is always executed after the finish of the test, regardless of the result of the executed tests. Behave either prints steps from a test scenario to standard output or can generate an HTML log. This log format is more suitable for examination of the results executed in the CI environment accessible through the web interface. Thanks to the setup done by the \textit{qecore} library, the test reports have embedded logs, videos from the test runs, and a screenshot generated in a moment, when the test case fails. The next several section described testing done on several application and evaluation of the achieved results.
+
+\section{Model coverage}
+The code coverage can be measured in several ways. The first level of the test coverage can be measured as a coverage of the derived model of the application. The coverage is measured as the amount of the nodes involved in the test cases from the overall number of nodes in the model. It is expected that this coverage will always cover 100\% of the nodes. However, with applications that contains richer GUI, some of the nodes might be hidden or the generator will not be able to derive the sequence that will be able to access those nodes. This especially apply in cases when the generator will be used on a new application that contains some special arrangement of the nodes or the action on the given node could not be executed for some reason. The generator skips the whole test case, generates an error message and proceed to the next test case. 
+
+The uncovered nodes, along with test sequences that are involved in, are printed in a report after the test generator finishes.  The nodes or test sequences reported as failed must be evaluated manually with several possible outcomes:
+\begin{enumerate}
+    \item a bug in the tested application
+    \item a bug in the accessibility (e.g. incorrectly reported coordinates)
+    \item an imperfection/bug in the test generator
+    \item the tested application is affected by the previous test case (change in the settings/layout), an additional cleanup must be added to \texttt{apps.yaml}
+\end{enumerate}
+The report not only serves as a feedback from the generator about potential issues but it also measures the event coverage. The event coverage measures the amount of actions executed on the model and it is a common technique used in GUI testing \cite{NguyenBao2014Gait}.
+
+The test generator itself is a piece of software as well. It is designed to work with as many application as possible, therefore, the implementation is as general as possible. If a tested application reveals flaws that may be fixed within the test generator. The fixes must maintain the approach that the implementation has to be as general as possible, thus they will not affect the other components. Therefore, of the fix is too application specific, the effort that needs to be done to include the the fix in the test generator should not be greater than developing a custom test case.
+
+\section{Code Coverage}
+The another approach can be based on evaluating the percentage of model, that has been covered by the generated tests. In that case, two values need to be measured separately, to be specific a percentage of actions and a percentage of nodes covered by the generated tests.
+
+
+Another possibility is to use a tool \verb|gcov|, which is standart part of the GNU development tools. The purpose of the tool is Code Coverage Analysis and it was designed to find dead or unexecuted code. Code coverage analysis can be characterized by the following steps: 
+\begin{enumerate}
+  \item Find the areas of a program not exercised by the test suite.
+  \item Create additional test cases to exercise the dead code, thereby increasing code coverage.
+  \item Determine a quantitative measure of code coverage, which is an indirect measure of quality.
+\end{enumerate}
+
+To obtain a measurement of the code coverage, it's required to compile the application with \verb|gcc| and two extra parameters \verb|-fprofile-arcs| and \verb|-ftestcoverage|. Running the compiled binary with a \verb|gcov| tool will yield a percentage of the executed code located in source file. Measurements can be obtained for any software written in C/C++.\cite{gcov}
+
+Comparing results measured by the \verb|gcov| should provide a suitable method for evaluating results achieved by the generated tests or to compare multiple methods of test generation. However, event coverage should be more important for GUI applications.
+
+
+
+%test coverage, node coverage, action coverage
+
+\section{GNOME Terminal}
+\section{Gedit (flatpak)}
+\section{LibreOffice StartCenter}
 
 
 
