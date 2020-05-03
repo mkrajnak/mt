@@ -427,6 +427,46 @@ The application is terminated and the execution of the test sequences can start.
 % graph
 The test generator than start to iterate over the extracted test sequences, monitors the application, execute actions and generates steps and assertions that are then put together in behave scenarios. Every test sequence has a newly started instance of the application, so every scenario begins with a step that starts the application. The step contains an assertion to make sure that the application started and is ready for the interaction. The generator creates a copy of the list containing the applications that are currently available through the AT-SPI. Another copy of the currently available nodes in the current application. Then it pops the first node from the action sequence, uses the metadata to locate the same node within the currently running instance of the application, and executes the action associated with the given node. The execution of the action is followed by several checks performed on the current instance. The checks calculates the symmetric difference between the copies of the tree obtained before and after the action is executed.  
 
+\begin{algorithm}[H]
+\SetAlgoLined
+\KwData{Running application exposed to the accessibility bus}
+\KwResult{Test Cases}
+ start the application\;
+ scan the application tree, generate the test tree\;
+ derive the test sequences\;
+ terminate the application\;
+\SetKw{KwInn}{in} 
+ \ForEach{$sequence$ \KwInn $test\_sequences$}{
+ application cleanup, if required\;
+ start the application\;
+  \ForEach{$action$ \KwInn $sequence$}{
+   save the state before the action is executed\;
+   execute the $action$\;
+   add the action step to the test case\;
+  \eIf{application is not running}{
+   check return code and the logs\;
+   \eIf{application crashed}{
+    print reproducer and log\;
+    }{
+    add the quit assertion to the test case\;
+    }
+   }{
+   evaluate the tree changes through symmetric difference\;
+   \uIf{action started new application}{
+    generate the assertion\;
+    }\uElseIf{action generated new window/s}{
+    \ForEach{$window$ \KwInn $windows$}{
+        append new sequences for the $window$\;
+    }
+    }\Else{
+     append new sequences for new nodes\;
+    }
+  }
+ }
+ }
+ \caption{Test generation algorithm}
+ \label{test_gen_algorithm}
+\end{algorithm}
 
 \section{OCR integration}
 The main goal of the OCR integration in this work is to provide an additional level of verification of string values presented by applications and thus not rely purely on AT-SPI. However, the integration of the OCR into generated test cases has to be reliable to avoid false-positive results from the tests. Therefore, the integration of Tesseract has to be properly tested and the implementation has to contain image preprocessing optimizations and configuration to achieve specified goals.
