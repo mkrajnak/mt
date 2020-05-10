@@ -562,7 +562,7 @@ The results obtained from experiments with the OCR were implemented to a single 
 \chapter{Testing and Results}
 The result of the generation process is a folder structure containing generated test cases, configuration files, and scripts for execution in the CI environment. Generated test cases are located in the file named \texttt{generated.feature}. The file contains all the test cases divided into so-called scenarios. Each scenario has a unique name starting with character \texttt{@}, thus allowing a single test execution if required. The test can be executed also at once by simply executing command \texttt{behave} in the generated project folder. The test are also respecting the cleanup commands which are set in \texttt{apps.yaml}. The cleanup is always executed after the finish of the test, regardless of the result of the executed tests. Behave either prints steps from a test scenario to standard output or can generate an HTML log. This log format is more suitable for examination of the results executed in the CI environment accessible through the web interface. Thanks to the setup done by the \textit{qecore} library, the test reports have embedded logs, videos from the test runs, and a screenshot generated in a moment, when the test case fails. The next several section described testing done on several application and evaluation of the achieved results.
 
-\section{Model coverage}
+\section{Model/Event coverage}
 The code coverage can be measured in several ways. The first level of the test coverage can be measured as a coverage of the derived model of the application. The coverage is measured as the amount of the nodes involved in the test cases from the overall number of nodes in the model. It is expected that this coverage will always cover 100\% of the nodes. However, with applications that contains richer GUI, some of the nodes might be hidden or the generator will not be able to derive the sequence that will be able to access those nodes. This especially apply in cases when the generator will be used on a new application that contains some special arrangement of the nodes or the action on the given node could not be executed for some reason. The generator skips the whole test case, generates an error message and proceed to the next test case. 
 
 The uncovered nodes, along with test sequences that are involved in, are printed in a report after the test generator finishes.  The nodes or test sequences reported as failed must be evaluated manually with several possible outcomes:
@@ -572,7 +572,7 @@ The uncovered nodes, along with test sequences that are involved in, are printed
     \item an imperfection/bug in the test generator
     \item the tested application is affected by the previous test case (change in the settings/layout), an additional cleanup must be added to \texttt{apps.yaml}
 \end{enumerate}
-The report not only serves as a feedback from the generator about potential issues but it also measures the event coverage. The event coverage measures the amount of actions executed on the model and it is a common technique used in GUI testing \cite{NguyenBao2014Gait}.
+The report not only serves as a feedback from the generator about potential issues but it also measures the event coverage. The event coverage measures the amount of actions executed on the model and it is a common technique used in GUI testing\cite{NguyenBao2014Gait}.
 
 The test generator itself is a piece of software as well. It is designed to work with as many application as possible, therefore, the implementation is as general as possible. If a tested application reveals flaws that may be fixed within the test generator. The fixes must maintain the approach that the implementation has to be as general as possible, thus they will not affect the other components. Therefore, of the fix is too application specific, the effort that needs to be done to include the the fix in the test generator should not be greater than developing a custom test case.
 
@@ -589,11 +589,12 @@ To obtain a measurement of the code coverage, it's required to compile the appli
 According to the GTK website\footnote{\url{https://www.gtk.org/}}, the framework supports JavaScript, Python, Rust, Vala, C, and Perl. The \verb|gcov| method of measuring the test coverage is only possible for C and Vala.    
 Comparing results measured by the \verb|gcov| should provide a suitable method for evaluating results achieved by the generated tests or to compare multiple methods of test generation. However, event coverage should be more important for GUI applications.
 
-
-
 %test coverage, node coverage, action coverage
 
 \section{GNOME Terminal}
+GNOME Terminal is one of the most important application from the GNOME application stack. It is also known as \textit{Terminal} and it serves as a terminal emulator for accessing a UNIX shell environment. The application can be used to run programs available on the system\footnote{\url{https://help.gnome.org/users/gnome-terminal/stable/introduction.html.en}}. Compared to the majority of GNOME applications, Terminal does not contain as many UI elements. Therefore, it was used for the initial development of the test generator. Shortly after the first proof of concept was tested, the list of application was extended to \textit{LibreOffice Start Center} and \textit{Gedit}. 
+
+
 \section{Gedit (flatpak)}
 \section{LibreOffice StartCenter}
 window detection, spawning application withing - changing window
