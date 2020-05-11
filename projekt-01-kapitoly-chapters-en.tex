@@ -600,23 +600,40 @@ According to the GTK website\footnote{\url{https://www.gtk.org/}}, the framework
 
 %test coverage, node coverage, action coverage
 
-\section{GNOME Terminal}
+\section{GNOME Terminal Tests}
 % code coverage, explanation of achieved coverage
 GNOME Terminal is one of the most important application from the GNOME application stack. It is also known as \textit{Terminal} and it serves as a terminal emulator for accessing a UNIX shell environment. The application can be used to run programs available on the system\footnote{\url{https://help.gnome.org/users/gnome-terminal/stable/introduction.html.en}}. Compared to the majority of GNOME applications, Terminal does not contain as many UI elements. Therefore, it was used for the initial development of the test generator. Shortly after the first proof of concept was tested, the list of application was extended to \textit{LibreOffice Start Center} and \textit{Gedit}. 
 
-\begin{lstlisting}[language=Gherkin,caption={Final test generator report},label={gnome-termina-report}]
+\begin{lstlisting}[language=Gherkin,caption={Final test generator report},label={gnome-terminal-report}]
     Event Coverage Report:
-    Covered Events: 1701/1702
+        Covered Events: 1701/1702
+    Number of covered Nodes: 516
+    Number of Generated Test Cases: 485 
     Nodes without the coverage:
-        Menu:toggle button:click
-        :link:Click
+    Edit:menu:click => Preferences:menu item:click => :list item: 
+            => Menu:toggle button:click
+    Help:menu:click => About:menu item:click => :link:Click
     No errors found!
-    Generation time: 1:52:58.190075
+    Generation time: 1:53:52.676497
 \end{lstlisting}
 
-The developed test generator was able to generate 485 test cases while covering the 1701 event in the application. Test cases are covering menus, several smaller dialogs and \textit{Preferences} window which contains the majority of covered nodes. 
+Listing \ref{gnome-terminal-report} contains the final report and summarizes the testing performed on \textit{Terminal}. The developed test generator was able to generate 485 test cases while covering the 1701 events in the application. Tests are covering menus, several smaller dialogs, and a \textit{Preferences} window.  
 
-\begin{figure}[hbt]
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth,clip]{obrazky-figures/gnome-terminal_n_start.png}
+	\caption{Initial graph of the test sequence available after the start of \textit{Terminal}}
+	\label{gnome-terminal-graph1}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth,clip]{obrazky-figures/gnome-terminal_n_final.png}
+	\caption{Expanded graph of test sequences, the graph demonstrates node expansion during the test generation}
+	\label{gnome-terminal-graph2}
+\end{figure}
+
+\begin{figure}[H]
 	\centering
 	\includegraphics[width=0.8\textwidth,clip]{obrazky-figures/gnome-termina-coverage.png}
 	\caption{LCOV code coverage report documents the achieved code coverage with generated test cases}

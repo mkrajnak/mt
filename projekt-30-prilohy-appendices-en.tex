@@ -22,7 +22,24 @@
 \end{tabular}
 
 
-\chapter{Setup Instructions}
+\chapter{Setup Instructions and User Manual}\label{manual}
+
+\begin{lstlisting}[]
+Usage: testgen.py [OPTIONS]
+
+  Accessibility test generation tool for GTK+ applications
+
+Options:
+  --generate-project-only  only generates project folder for --app
+  --disable-ocr            disabled-ocr checks while generating tests
+  --shallow                Skip inserting new parts to test tree
+  --debug                  Enable debug logging
+  --test INTEGER           Test number in generated sequence.
+  --app TEXT               Name of the application in apps.yaml
+  --help                   Show this message and exit.
+
+\end{lstlisting}
+
 
 
 \chapter{Examples of Generated Test Scenarios}
