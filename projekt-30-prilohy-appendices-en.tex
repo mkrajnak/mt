@@ -31,12 +31,15 @@ Usage: testgen.py [OPTIONS]
   Accessibility test generation tool for GTK+ applications
 
 Options:
-  --generate-project-only  only generates project folder for --app
-  --disable-ocr            disabled-ocr checks while generating tests
-  --shallow                Skip inserting new parts to test tree
-  --debug                  Enable debug logging
-  --test INTEGER           Test number in generated sequence.
-  --app TEXT               Name of the application in apps.yaml
+  --app TEXT               Name of the application entry in apps.yaml
+                           (compulsory)
+  --generate-project-only  Generates only project folder for --app
+  --disable-ocr            Disables OCR
+  --shallow                Disables model expansion (test only nodes available
+                           after start)
+  --debug                  Enables debug logging
+  --test INTEGER           Regenerates only defined test, expected to be used
+                           with --shallow
   --help                   Show this message and exit.
 
 \end{lstlisting}
