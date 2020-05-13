@@ -170,12 +170,12 @@ Dogtail testing reveals some minor problems which might occur during the test de
 
 Further testing discovered a non-accessible menu\footnote{https://bugzilla.redhat.com/1723836} or a nameless menu button\footnote{https://wiki.gnome.org/Apps/DiskUsageAnalyzer}. Once an action needs to be dispatched on such element, the identification has to be done either through a parent element or a sibling element. Additionally, the execution of a mouse event will require an offset calculation to specify the correct element position on the screen.
  
- So to conclude this chapter, dogtail is a powerful tool for the development of automated test cases in the GNOME3 environment. On the other hand, it contains discussed limitations and flaws. Those limitations must not come from the dogtail itself, they are either accessibility bugs or bugs in the GTK3 framework (non-accessible menu).  
+ So to conclude this chapter, dogtail is a powerful tool for the development of automated test cases in the GNOME3 environment. On the other hand, it contains discussed limitations and flaws. Those limitations must not come from dogtail itself, they are either accessibility bugs or bugs in the GTK3 framework (non-accessible menu).  
 
-\subsection{The Accerciser}
-The Accerciser is an interactive accessibility explorer developed in Python. It provides a well-arranged graphical frontend for the AT-SPI library, hence it can inspect, examine and interact with widgets. It also serves as a verification tool for developers, to check that their applications are providing correct information to assistive technologies and automated testing frameworks. Compared to Sniff, Accerciser's interface (Figure \ref{Accerciser_img}) offers extended features and functions. The default interface has three sections, a~tree view with the entire hierarchy of accessible objects and two optional plugin areas. The~Accerciser has an extensible, plugin-based architecture. Most of the features available by default are provided by plugins discussed in the next several paragraphs.
+\subsection{Accerciser}
+Accerciser is an interactive accessibility explorer developed in Python. It provides a well-arranged graphical frontend for the AT-SPI library, hence it can inspect, examine and interact with widgets. It also serves as a verification tool for developers, to check that their applications are providing correct information to assistive technologies and automated testing frameworks. Compared to Sniff, Accerciser's interface (Figure \ref{Accerciser_img}) offers extended features and functions. The default interface has three sections, a~tree view with the entire hierarchy of accessible objects and two optional plugin areas. The~Accerciser has an extensible, plugin-based architecture. Most of the features available by default are provided by plugins discussed in the next several paragraphs.
 
-The \textit{Interface Viewer} plugin is an explorer of the AT-SPI interfaces provided by each accessible widget of a target application. When a tree element is selected, its interfaces are shown with a list of sensitive methods. The majority of methods are executable. The list contains methods for interaction with an object and various methods for obtaining more information about the object. The Accerciser offers an exploration of the following interfaces:
+The \textit{Interface Viewer} plugin is an explorer of the AT-SPI interfaces provided by each accessible widget of a target application. When a tree element is selected, its interfaces are shown with a list of sensitive methods. The majority of methods are executable. The list contains methods for interaction with an object and various methods for obtaining more information about the object. Accerciser offers an exploration of the following interfaces:
 \begin{itemize}
     \item Accessible - shows child count (number of child widgets), description, states, relations, and other attributes
     \item Application - if implemented (not mandatory), it shows application ID, toolkit and version
@@ -507,7 +507,7 @@ If the return code does not contain the value 0, the generator raises the error,
 
 In some cases, the occurrence of an error does not mean that the application crashes. Therefore, the generator checks the log for known errors after every executed action regardless of the state of the application. The list of the messages that are being checked is stored in the file \texttt{errors.py}. A new error message can be appended to the list at any time. The list currently contains messages that previously occurred in bugs related to \textit{GNOME} applications.
 
-\section{Model Expansion}
+\subsection{Model Expansion}
 
 Successful execution of the action, followed by no errors detected in the log and application still being run, indicates that the action could have changed the state of the application. 
 
@@ -517,7 +517,7 @@ If the previously described effort failed, the generator proceeds to search for 
 
 The generator distinguishes between several roles of the discovered nodes. The appearance of a new window or a dialog causes the generation of an assertion to the current test case. Regardless of a role, the generator creates a \texttt{TestTree} instance with new nodes (a subtree) and retrieves test sequences derived from the subtree. The new test sequences are prepended with the sequence that lead to their discovery and then added to the list of the test sequences that will be executed in the next iterations.
 
-\section{Generating Reports}
+\subsection{Generating Reports}
 
 \section{OCR integration}
 The main goal of the OCR integration in this work is to provide an additional level of verification of string values presented by applications and thus not rely purely on AT-SPI. However, the integration of OCR into the generated test cases has to be reliable to avoid false-positive test results. For the reasons mentioned in \ref{ocr_conclusion}, the integration of OCR has to be properly tested, the implementation has to contain image preprocessing optimizations and configuration to achieve stable results. Tesseract offers several options that allow to optimize string detection and text analysis. One of them is the definition of the recognized language. It is assumed that most of the tested applications will use the English language and therefore, the dataset trained for the English language is used.
@@ -612,7 +612,14 @@ According to the GTK website\footnote{\url{https://www.gtk.org/}}, the framework
 \newpage
 \section{GNOME Terminal Tests}
 % code coverage, explanation of achieved coverage
-GNOME Terminal is one of the most important applications from the GNOME application stack. It is also known as \textit{Terminal} and it serves as a terminal emulator for accessing a UNIX shell environment. The application can be used to run programs available on the system\footnote{\url{https://help.gnome.org/users/gnome-terminal/stable/introduction.html.en}}. Compared to the majority of GNOME applications, \textit{Terminal} does not contain as many UI elements. Therefore, it was used for the initial development of the test generator. Shortly after the first proof of concept was tested, the list of applications was extended to \textit{LibreOffice Start Center} and \textit{Gedit}. 
+GNOME Terminal is one of the most important applications from the GNOME application stack. It is also known as \textit{Terminal} and it serves as a terminal emulator for accessing a UNIX shell environment. The application can be used to run programs available on the system\footnote{\url{https://help.gnome.org/users/gnome-terminal/stable/introduction.html.en}}. Compared to the majority of GNOME applications, \textit{Terminal} does not contain as many UI elements (Figure \text{gnome-terminal-cleanup}). Therefore, it was used for the initial development of the test generator. Shortly after the first proof of concept was tested, the list of applications was extended to \textit{LibreOffice Start Center} and \textit{Gedit}. 
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.85\textwidth,clip]{obrazky-figures/terminal_scr.png}
+	\caption{GNOME Terminal application}
+	\label{terminal-gui}
+\end{figure}
 
 \subsection{Setup and Cleanup}
 Greater part of test cases is performing some changes of settings either via \textit{Preferences} dialog or through menus located at the top of the window. Preferences can change various aspects of the application, including encoding, layout of widgets, and color schemes. Those changes need to be set back to default values to make sure that test cases won't affect subsequent test cases. In \textit{Terminal}, this is achieved through 2 cleanup commands executed between applied test sequences (Code Listing \ref{gnome-terminal-cleanup}). Testing was performed on rpm package gnome-terminal-3.28.3-1.el8.x86\_64, Red Hat Enterprise Linux 8.3.
