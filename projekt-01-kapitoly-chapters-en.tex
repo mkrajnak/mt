@@ -51,6 +51,9 @@ The technique handles the software as a black box. A tester has no knowledge abo
 \section{White Box Testing}
 The design of test cases depends on the implementation of the software entity. White box testing is focused on internal logic and structure of the code, testing the software from the developer's perspective. The design of test cases requires full knowledge about software's sources, thus allowing to possibly test every branch in the code. Test cases are usually written as unit tests, system tests or integration tests. Tests are suitable for execution during the development and testing of the finished product as well.\cite{white_black}
 
+\section{Exploratory testing}
+Exploratory testing is an approach to software testing that is often described as simultaneous learning, test design, and execution. It focuses on the discovery and relies on the experience of the tester to find defects tat are not covered in the scope of other tests. The goal is to complement traditional testing to find million-dollar defects that are generally hidden behind the defined workflow.\cite{exploratory_testing}
+
 \section{Record/Replay and Scripting Tools}\label{record_replay}
 To mitigate the mentioned concerns and increase the quality of software, automated testing has been proposed as a solution. A considerable amount of work has been devoted to high-level test automation, resulting in Record and Replay techniques. Tools are continuously recording the coordinates and properties of GUI components during manual user interaction. Obtained recordings can be played back to emulate user interaction and validate the correct state of the system during the regression testing. These techniques have also certain limitations, which is typically sensitivity to GUI layout changes and code changes. The changes are forcing testers to repeat the recording processes and therefore, they cause additional costs by maintaining automated tests.\cite{guitesting} 
 
@@ -65,6 +68,7 @@ Unlike previously mentioned script-based and capture/replay tools, random-walk t
 This category of solutions is often being referred to as Visual GUI Testing. It is an emerging technique combining scripting languages with image recognition. The image recognition allows us to test various systems regardless of their implementation, operating systems, or even platforms. Tools are providing support for emulating user interaction with the bitmap components (images, buttons) shown to a user on the screen. The biggest limitation of solutions based on the image recognition is that they are not suitable for highly animated GUIs.\cite{guitesting}. There is also a considerable amount of work required for test maintenance, mostly caused by design changes of widgets throughout the development.   
 
 There are several examples, including the open-source tools Xpresser\footnote{\url{https://wiki.ubuntu.com/Xpresser}} and Sikuli\footnote{\url{http://www.sikulix.com/\#home1}}. The~Xpresser is a python module that works with a directory of images containing cropped images of widgets. Once the image matching algorithm identifies a location of cropped image on the screen, an intended action can be performed on given coordinates.\cite{xpresser} The~Xpresser is mostly used for building automated test cases for Linux distribution Ubuntu.
+
 
 \newpage
 \section{Model-based Testing}
@@ -273,11 +277,26 @@ Figure 4.1 describes an overview of the workflow with the proposed test generato
 From the testing perspective the proposed tool combines several testing techniques. The extracted AT-SPI metadata creates the foundation for a simplified model of the application by partially adapting the model-based testing technique. Since the test cases are derived from the model without any knowledge about the implementation of a tested application, the tool resides in the category of black-box testing. The knowledge about the SUT provided by the model allows the tool to benefit from the approaches described in the random input testing and random walk tools in a more deterministic way. The tool can be characterized as a semi-smart tool as it can detect certain crashes of the SUT during the test generation and immediately report them with a reproducer. The results of the test generation process are test cases that may be adjusted and executed again. The tests are executable in the CI/CD pipeline that can be triggered at any stage of the application development and report the results without manual retesting.
 
 \section{Model Extraction}
+The model created as an abstraction of a test application is described as follows: 
+
+\theoremstyle{definition}
+\begin{definition}{Model}
+A Model M is a 4-tuple: $M = (N, E, S, T)$ (a directed graph), where:
+\begin{enumerate}
+\item $N$ is a finite set of $Nodes$ (widgets associated with executable action, or root element);
+\item $E$ is a finite set of $Events$ (actions), where  $E\ =\ \{e\ |\ (n_S, e, n_T)\ \in\ T\}$;
+\item $S$ is a set of starting $Nodes$ (root window element)  $S\ \subseteq\ N\}$;
+\item $T\ \subseteq\ Node\ \times \ Event\ \times \ Node$ is a transition relation.
+\end{enumerate}
+\end{definition}
+
 The model extraction process relies on the AT-SPI metadata that are provided after the start of an application. As mentioned in section \ref{library_pyatspi}, once the application is running, a tree of widgets is exposed and available for interaction. The provided representation of the tree itself is not suitable to be directly used as a model of an application, as the implementation contains several restrictions for purposes of this work.
 
 The first restriction is represented by nodes/widgets with no functionality nor a way of interaction for the user, e.g.: filler, separator, panel, etc. Theoretically, a copy of the three could be created with those nodes filtered out, although in that case the parent-child relationship in the tree needs to be restored accordingly. This is not possible, since the attributes \texttt{children} and \texttt{parent} in \texttt{Atspi.Accessible} object instances are read-only. The tree also contains references to properties and methods which are available only during application runtime and possibly disallowing access to the properties of an extracted model after application crashes or terminates. Furthermore, the test generator must start the execution of every test scenario (test sequence) from the default state which is achieved by obtaining a fresh instance of a tested application.
 
 A solution for those restrictions is a custom implementation of the accessibility tree. In the beginning, a custom tree is derived from the original tree provided by the \textit{dogtail}. The unusable nodes are filtered out, while the parent-child relationships of the nodes are preserved. The custom tree can be used as a model, that will map the possibilities of interactions available for users working with an application. The model includes every node from the original tree with available actions that are also executable by the AT-SPI. 
+
+The development revealed, that not all rendered widgets are properly labeled with actions by AT-SPI. To be specific, nodes with role names \texttt{page tab} and \texttt{list item} are not labelled with actions. The first mentioned has to be clicked to gain access to additional nodes, the second one can be placed on the same level as a push button. Therefore, the generator relies on records in file \texttt{roleNames.py} where the role names of actionless nodes are enumerated. If a node is not associated with any action, the default action for the node is \texttt{click}.
 
 However, the model does not allow the execution of the actions directly, as the generation process requires to run several instances of an application. The instances of accessible objects and some of their properties are valid only for one application runtime. Therefore, several important values are extracted in the process, making them available even after the termination of an application instance. The properties \texttt{name, roleName, parent\_name, parent\_roleName} are used as the unique identifier because some nodes might share the same \texttt{name} and \texttt{roleName} (e.g. OK, push button). The properties give the test generator the ability to match each node from the model to the current application instance exposed by the accessibility. The implementation of the model is presented in the class diagram in Figure \ref{tree_diagram}.
 
@@ -290,7 +309,6 @@ However, the model does not allow the execution of the actions directly, as the 
 
 Starting from the lowest level, an instance of the class \texttt{GNode} represents one node from the tree. Several attributes are copied from the original \texttt{dogtail.tree.Node} instance, including attributes storing the pieces of information about the parent node, the data describing the state of the node, the list of children, and if available, the name of the action method. The list of children is also composed by instances of the \texttt{GNode} class, so the tree is recreated recursively. Therefore, the model is able to hold all information about tested applications, without relying on their state. An instance of the \texttt{GTree} can represent either a whole application or a smaller part of the application e.g.: a dialog or a menu. As discussed previously, this offline model of the application tree also contains a lot of nodes without the ability of interaction, which needs to be filtered out. Those nodes are identified by the list of \texttt{RoleName}s that are gathered in the separate file \texttt{rolenames.py}. Finally, the class \texttt{TestTree} serves as a wrapper that filters those nodes and preserves the parent-child relationship. The result of this process is an instance of the \texttt{TestTree} object and it contains only nodes required to generate test cases. 
 
-\newpage
 \section{Test Environment}
 Before the generation process starts, it is necessary to have the implementation for monitoring the state of tested applications and acquire the ability to perform start and stop operations. The test generation process performs various actions available in an application that might change settings or layout of the application. Generation of every test case must start from the same state which should satisfy the following conditions: 
 \begin{enumerate}
@@ -325,6 +343,7 @@ libreoffice-startcenter:
 \end{lstlisting}
 
 The \texttt{apps.yaml} gathers data about all tested applications. Each application entry starts with an application name on the top level. The application name should be unique as the name is used as a folder name of the generated project. Required values may vary per tested application. Some of them might not be necessary for the test generation, although they are required for the test execution.
+\newpage
 The list of items that can be defined for each application includes:
 
 \begin{itemize}
@@ -378,6 +397,7 @@ The implementation for the non-flatpak applications is encapsulated in the class
 	\label{test_gen}
 \end{figure}
 
+\newpage
 \section{Generating Environment for the Test Execution}
 The input of test generator is provided by the data in \texttt{apps.yaml}. The output is a project structure containing generated test cases and other files required for the test execution. 
 
@@ -438,14 +458,6 @@ The test generator implementation is encapsulated in the class \texttt{TestGen} 
 The generator then creates a copy of the default project structure and injects the files inside the project structure with values that correspond to the application that is going to be tested (Figure \ref{project_folder}). Namely, the files \texttt{environment.py}, \texttt{mapper.yaml}, and \texttt{cleanup.sh} contain placeholders (tags) that are replaced by values defined in \texttt{apps.yaml}. Just note that no Python code is being generated during the process. The default project already contains all the predefined \textit{behave} steps required to execute generated test cases.
 The next sections are dedicated to the details of the generation algorithm. The Algorithm \ref{test_gen_algorithm} contains a shorter version written in a pseudocode. 
 
-% duplicit node renaming
-\subsection{Derivation of Test Sequences}
-
-The generator proceeds with a first start of a tested application and extracts the AT-SPI tree of the application instance through the \texttt{dogtail}. Then, a writable copy of the tree is created through the \texttt{GTree} instance. The action-less nodes are then removed and the remaining notes are placed in the new instance of the \texttt{TestTree} class. Test cases are derived from the test tree through the class method \texttt{test\_sequences}. 
-
-The method returns a list\footnote{\url{https://docs.python.org/3/tutorial/datastructures.html}} with test sequences. A test sequence contains a list of nodes with actions that will be executed for every test case. The method gathers the list of leaves in the \texttt{TestTree}. Then it iterates through the list of leaves and calculates path from a leaf to the root of the tree. Each path contains a list of nodes. The result is a list of paths or as mentioned earlier test sequences. A test sequence does not represent a whole test case. The whole test case is created by applying the test sequence on the live instance of the application. While applying the test sequence, the generator appends assertions steps and OCR checks. The checks are generated either before or after the execution of actions and they will be used as a verification in a generated test case to confirm that the application reached the intended state. A test sequence can be used multiple times or it can be extended, if the generator discovers that the applied sequence led to a discovery of new nodes. Those new nodes are evaluated and the generator creates new test sequences, each of those sequences start with a sequence that led to their discovery. 
-
-
 \begin{center}
 \begin{algorithm}[H]
 \caption{Test generation algorithm pseudocode}
@@ -488,6 +500,13 @@ The method returns a list\footnote{\url{https://docs.python.org/3/tutorial/datas
  }
 \end{algorithm}
 \end{center}
+
+% duplicit node renaming
+\subsection{Derivation of Test Sequences}
+
+The generator proceeds with a first start of a tested application and extracts the AT-SPI tree of the application instance through the \texttt{dogtail}. Then, a writable copy of the tree is created through the \texttt{GTree} instance. The action-less nodes are then removed and the remaining notes are placed in the new instance of the \texttt{TestTree} class. Test cases are derived from the test tree through the class method \texttt{test\_sequences}. 
+
+The method returns a list\footnote{\url{https://docs.python.org/3/tutorial/datastructures.html}} with test sequences. A test sequence contains a list of nodes with actions that will be executed for every test case. The method gathers the list of leaves in the \texttt{TestTree}. Then it iterates through the list of leaves and calculates path from a leaf to the root of the tree. Each path contains a list of nodes. The result is a list of paths or as mentioned earlier test sequences. A test sequence does not represent a whole test case. The whole test case is created by applying the test sequence on the live instance of the application. While applying the test sequence, the generator appends assertions steps and OCR checks. The checks are generated either before or after the execution of actions and they will be used as a verification in a generated test case to confirm that the application reached the intended state. A test sequence can be used multiple times or it can be extended, if the generator discovers that the applied sequence led to a discovery of new nodes. Those new nodes are evaluated and the generator creates new test sequences, each of those sequences start with a sequence that led to their discovery. 
 
 \subsection{Execution of Test Sequences}
 The initial phase is completed by the termination of the application instance, the generator continues with the execution of test sequences (line 8 of Algorithm \ref{test_gen_algorithm}). From this point the generator works with 3 instances of the tree: the current running application instance obtained through \textit{dogtail}, the instance of the class \texttt{Gtree}, the instance of the class \texttt{TestTree} or so-called model used to derive the tests.
@@ -583,10 +602,6 @@ Generated test cases are located in the file named \texttt{generated.feature}. T
 
 Thanks to the setup done by the \textit{qecore} library, the \textit{behave} reports contain embedded logs, videos from the test runs, and a screenshot generated in a moment, when the test case fails. The next several sections describe the testing performed on several applications and the evaluation of the achieved results. The section starts with a short description of an application, followed by a result achieved by the proposed test generation tool.  
 
-\section{Test Environment}
-All performed testing was done on virtual machines preloaded with distributions \textit{Red Hat Enterprise Linux 8.2/8.3} and \textit{Fedora 31/32}. The execution of the test generator on production workstations should be avoided as the performed actions may potentially lead to alteration of the system or data loss.  
-
-
 \section{Model/Event Coverage}
 Test coverage can be measured in several ways. One option is to measure the amount on nodes and events covered by tests. The model is measured as the amount of the nodes involved in the test cases from the overall number of nodes in the model. It is expected that this coverage will always cover 100\% of the nodes. However, with applications that contain richer GUI, some of the nodes might be hidden or the generator will not be able to derive the sequence that will be able to access those nodes. This especially applies to cases when the generator will be used on a new application that contains some special layout or the action on the given node could not be executed for unknown reason. The generator skips the whole test case, generates an error message, and proceeds to the next test case. 
 
@@ -598,6 +613,7 @@ Nodes that are not covered by tests, along with test sequences that are involved
     \item the tested application is affected by the previous test case (change in the settings/layout), an additional cleanup must be added to \texttt{apps.yaml}
 \end{enumerate}
 The report not only serves as a feedback from the generator about potential issues but it also measures the event coverage. The event coverage measures the amount of actions executed on the model and it is a common technique used in GUI testing\cite{NguyenBao2014Gait}.
+Nevertheless, this approach also has a disadvantage. The event coverage report contains only events reported by the accessibility, other events like drag and drop, keyboard shortcuts and mouse scrolling are not included.
 
 \section{Code Coverage}
 Another possibility is to use a tool \verb|gcov|, which is a standard part of the GNU development tools. The purpose of the tool is Code Coverage Analysis and it was designed to find dead or unexecuted code. Code coverage analysis can be characterized by the following steps: 
@@ -616,9 +632,11 @@ To obtain measurements, tests must be executed with the custom binary, compiled 
     genhtml -o lcov_report -s --legend app.info --ignore-errors
 \end{lstlisting}
 
-
 According to the GTK website\footnote{\url{https://www.gtk.org/}}, the framework supports JavaScript, Python, Rust, Vala, C, and Perl. The \verb|gcov| method of measuring the test coverage is only possible for C and Vala.    
 %test coverage, node coverage, action coverage
+\section{Test Environment}
+All performed testing was done on virtual machines preloaded with distributions \textit{Red Hat Enterprise Linux 8.2/8.3} and \textit{Fedora 31/32}. The execution of the test generator on production workstations should be avoided as the performed actions may potentially lead to alteration of the system or data loss.  This also applies to the generated test cases. 
+
 \newpage
 \section{GNOME Terminal Tests}
 % code coverage, explanation of achieved coverage
@@ -686,7 +704,7 @@ Generated test cases covered 34.2\% lines of source code and executed 42\% of fu
 %window detection, spawning application withing - changing window
 %bug found
 \section{Comparison with Existing Test Suites}
-As discussed in Chapter \ref{proposed_solution}, the approach to application testing done by this work combines several testing techniques and takes advantage of existing testing frameworks and libraries. To the best of my knowledge, there is no tool currently available that tries to achieve the same goal, targeted on applications built for the GNOME environment. The closest related solutions were described in Section \ref{TEMA_TOOLSET}. However, the solution is designed for applications with different development cycle, where a model is being developed before a prototype of the application is available. The proposed solution derives the model of the SUT from the metadata provided by the accessibility.
+As discussed in Chapter \ref{proposed_solution}, the approach to application testing done by this work combines several testing techniques and takes advantage of existing testing frameworks and libraries. To the best of my knowledge, there is no tool currently available that tries to achieve the same goal, targeted on applications built for the GNOME environment. The closest related solutions were described in Section \ref{TEMA_TOOLSET}. However, the solution is designed for applications with different development cycle, where a model is being developed before a prototype of the application is available. Other solutions (e.g. references \cite{ReisJacinto2018Aetw},\cite{ArltS2012LSAf}) rely on static analysis and build a model from the source codes of the GUI applications written in Java. The proposed solution derives the model of the SUT from the metadata provided by the accessibility.
 
 When it comes to solutions used for the test automation for GNOME applications, several record and replay tools were described in Section \ref{record_replay}. The proposed solution utilizes \textit{dogtail} combined with framework \textit{behave}, so the generated test cases are executable even after the generation process is finished.
 
@@ -694,7 +712,7 @@ Scripted test cases are written by humans (testers). Their goal is either to aut
 
 The test generator itself is a piece of software as well. It is designed to work with as many applications as possible, therefore, the implementation is as general as possible. If a tested application reveals flaws that may be fixed within the test generator. The fixes must maintain the approach that the implementation has to be as general as possible, thus they will not affect the other components. Therefore, if the fix is too application-specific, the effort that needs to be done to include the fix in the test generator should not be greater than developing a custom test case.
 
-In conclusion, generated test cases are not comparable with the currently available test automation developed with script-based tools. The goal of generated test cases is to cover as many events in applications as possible whereas the currently available test suites are focused on automation of the most essential task performed by users and tasks in which bugs and defects occurred in the past. This comparison does not include unit tests or any other white-box tests performed on the library level.
+In conclusion, generated test cases are not comparable with the currently available test automation developed by testers with script-based tools. The goal of generated test cases is to cover as many events in applications as possible whereas the currently available test suites are focused on automation of the most essential tasks performed by users in which bugs and defects occurred in the past. This comparison does not include unit tests or any other white-box tests performed on the library level.
 
 
 \chapter{Conclusion}
