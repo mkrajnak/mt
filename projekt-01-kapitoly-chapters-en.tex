@@ -157,7 +157,7 @@ The package dogtail also includes a GUI tool \textit{Sniff} (AT-SPI Browser on F
 \begin{figure}[h]
 	\centering
 	\includegraphics[width=0.9\textwidth]{obrazky-figures/sniff.png}
-	\caption{Sniff utility (AT-SPI Browser), highlighting Icon View area in Nautilus File Manager, screenshot taken from Red Hat Enterprise Linux 8.2}
+	\caption{Sniff utility (AT-SPI Browser), highlighting \textit{Icon View} area in \textit{Nautilus} file manager}
 	\label{sniff}
 \end{figure}
 
@@ -196,7 +196,7 @@ The \textit{Interface Viewer} plugin is an explorer of the AT-SPI interfaces pro
 \begin{figure}[hbt]
 	\centering
 	\includegraphics[width=0.9\textwidth]{obrazky-figures/accerciser.png}
-	\caption{Accerciser's default configuration, Screenshot taken on Manjaro Linux with GNOME 3.34}
+	\caption{Accerciser's default configuration}
 	\label{Accerciser_img}
 \end{figure}
 
@@ -240,14 +240,13 @@ Tesseract's API for python is bundled in a module named \texttt{pytesseract}. Th
     \item top - integer value, specifies the number of pixels from the top of the image
     \item width - integer value, specifies the width of the recognized string 
     \item height - integer value, specifies the height of the recognized string
-    \item the rest are less important values for this work: \verb|level, page_num, block_num par_num|
-    \verb| line_num, word_num, conf|
+    \item the rest are less important values for this work: \verb|level, page_num, block_num| \\ \verb|par_num, line_num, word_num, conf|
 \end{itemize}
 
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=0.9\textwidth]{obrazky-figures/ocr+nautilus.png}
-	\caption{Demonstration of the OCR engine detection for the string Documents in Nautilus File Manager window, Red Hat Enterprise Linux 8.2}
+	\caption{Demonstration of the OCR engine detection for the string Documents in Nautilus File Manager window}
 	\label{ocr_nautilus}
 \end{figure}
 
@@ -282,18 +281,22 @@ The model created as an abstraction of a test application is described as follow
 \begin{definition}
 A Model $M$ is a 4-tuple: $M = (N, E, S, T)$ (a directed graph), where:
 \begin{enumerate}
-\item $N$ is a finite set of $Nodes$ (widgets associated with executable action, or root element);
+\item $N$ is a finite set of $Nodes$ (widgets associated with an executable action, or a root element);
 \item $E$ is a finite set of $Events$ (actions), where  $E\ =\ \{e\ |\ (n_S, e, n_T)\ \in\ T \land\ n_S,n_T\ \in \ N\}$;
-\item $S$ is a set of starting $Nodes$ (root window element)  $S\ \subseteq\ N\}$;
+\item $S$ is a set of starting $Nodes$ (a root window element)  $S\ \subseteq\ N\}$;
 \item $T\ \subseteq\ Node\ \times \ Event\ \times \ Node$ is a transition relation.
 \end{enumerate}
 \end{definition}
 
 The model extraction process relies on the AT-SPI metadata that is provided after the start of an application. As mentioned in section \ref{library_pyatspi}, once the application is running, a tree of widgets is exposed and available for interaction. The provided representation of the tree itself is not suitable to be directly used as a model of an application, as the implementation contains several restrictions for purposes of this work.
 
-The first restriction is represented by nodes/widgets with no functionality nor a way of interaction for the user, e.g.: filler, separator, panel, etc. Theoretically, a copy of the three could be created with those nodes filtered out, although in that case the parent-child relationship in the tree needs to be restored accordingly. This is not possible, since the attributes \texttt{children} and \texttt{parent} in \texttt{Atspi.Accessible} object instances are read-only. The tree also contains references to properties and methods which are available only during application runtime and possibly disallowing access to the properties of an extracted model after application crashes or terminates. Furthermore, the test generator must start the execution of every test scenario (test sequence) from the default state which is achieved by obtaining a fresh instance of a tested application.
+The first restriction is represented by nodes/widgets with no functionality nor a way of interaction for the user, e.g.: filler, separator, panel, etc. Theoretically, a copy of the three could be created with those nodes filtered out, although in that case the parent-child relationship in the tree needs to be restored accordingly. This is not possible, since the attributes \texttt{children} and \texttt{parent} in \texttt{Atspi.Accessible} object instances are read-only. 
 
-A solution for those restrictions is a custom implementation of the accessibility tree. In the beginning, a custom tree is derived from the original tree provided by the \textit{dogtail}. The unusable nodes are filtered out, while the parent-child relationships of the nodes are preserved. The custom tree can be used as a model, that will map the possibilities of interactions available for users working with an application. The model includes every node from the original tree with available actions that are also executable by the AT-SPI. 
+The tree also contains references to properties and methods which are available only during application runtime and possibly disallowing access to the properties of an extracted model after application crashes or terminates. Furthermore, the test generator must start the execution of every test scenario (test sequence) from the default state which is achieved by obtaining a fresh instance of a tested application.
+
+Additionally, the custom implementation of the model allows us to track the progress of the test generation process. The model consists of objects gathered in test sequences, each object has its unique identity that lasts throughout the test generation process. This implementation allows us to measure the event coverage and ensures that an already executed test sequence is never repeated.
+
+A solution for those restrictions is a custom implementation of the accessibility tree. In the beginning, a custom tree is derived from the original tree provided by the \textit{dogtail}. The unusable nodes are filtered out, while the parent-child relationships of the nodes are preserved. The custom tree can be used as a model, that will map the possibilities of interactions available for users working with an application. The model includes every node from the original tree with available actions that are also executable by the AT-SPI.
 
 The development revealed, that not all rendered widgets are properly labeled with actions by AT-SPI. To be specific, nodes with role names \texttt{page tab} and \texttt{list item} are not labelled with actions. The first mentioned has to be clicked to gain access to additional nodes, the second one can be placed on the same level as a push button. Therefore, the generator relies on records in file \texttt{roleNames.py} where the role names of actionless nodes are enumerated. If a node is not associated with any action, the default action for the node is \texttt{click}.
 
@@ -342,7 +345,7 @@ libreoffice-startcenter:
 \end{lstlisting}
 
 The \texttt{apps.yaml} gathers data about all tested applications. Each application entry starts with an application name on the top level. The application name should be unique as the name is used as a folder name of the generated project. Required values may vary per tested application. Some of them might not be necessary for the test generation, although they are required for the test execution.
-\newpage
+
 The list of items that can be defined for each application includes:
 
 \begin{itemize}
@@ -635,20 +638,19 @@ According to the GTK website\footnote{\url{https://www.gtk.org/}}, the framework
 \section{Test Environment}
 All performed testing was done on virtual machines preloaded with distributions \textit{Red Hat Enterprise Linux 8.2/8.3} and \textit{Fedora 31/32}. The execution of the test generator on production workstations should be avoided as the performed actions may potentially lead to alteration of the system or data loss.  This also applies to the generated test cases. 
 
-\newpage
 \section{GNOME Terminal Tests}
 % code coverage, explanation of achieved coverage
-GNOME Terminal is one of the most important applications from the GNOME application stack. It is also known as \textit{Terminal} and it serves as a terminal emulator for accessing a UNIX shell environment. The application can be used to run programs available on the system\footnote{\url{https://help.gnome.org/users/gnome-terminal/stable/introduction.html.en}}. Compared to the majority of GNOME applications, \textit{Terminal} does not contain as many UI elements (Figure \text{gnome-terminal-cleanup}). Therefore, it was used for the initial development of the test generator. Shortly after the first proof of concept was tested, the list of applications was extended to \textit{LibreOffice Start Center} and \textit{Gedit}. 
+GNOME Terminal is one of the most important applications from the GNOME application stack. It is also known as \textit{Terminal} and it serves as a terminal emulator for accessing a UNIX shell environment. The application can be used to run programs available on the system\footnote{\url{https://help.gnome.org/users/gnome-terminal/stable/introduction.html.en}}. Compared to the majority of GNOME applications, \textit{Terminal} does not contain as many UI elements (Figure \ref{terminal-gui}). Therefore, it was used for the initial development of the test generator. Shortly after the first proof of concept was tested, the list of applications was extended to \textit{LibreOffice Start Center} and \textit{Gedit}. 
 
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=0.85\textwidth,clip]{obrazky-figures/terminal_scr.png}
-	\caption{GNOME Terminal application}
+	\caption{GNOME Terminal application UI}
 	\label{terminal-gui}
 \end{figure}
 
 \subsection{Setup and Cleanup}
-Greater part of test cases is performing some changes of settings either via \textit{Preferences} dialog or through menus located at the top of the window. Preferences can change various aspects of the application, including encoding, layout of widgets, and color schemes. Those changes need to be set back to default values to make sure that test cases won't affect subsequent test cases. In \textit{Terminal}, this is achieved through 2 cleanup commands executed between applied test sequences (Code Listing \ref{gnome-terminal-cleanup}). Testing was performed on rpm package gnome-terminal-3.28.3-1.el8.x86\_64, Red Hat Enterprise Linux 8.3.
+Greater part of test cases is performing some changes of settings either via \textit{Preferences} dialog or through menus located at the top of the window. Preferences can change various aspects of the application, including encoding, layout of widgets, and color schemes. Those changes need to be set back to default values to make sure that test cases won't affect subsequent test cases. In \textit{Terminal}, this is achieved through 2 cleanup commands executed between applied test sequences (Code Listing \ref{gnome-terminal-cleanup}). Testing was performed on rpm package \texttt{gnome-terminal-3.28.3-1.el8.x86\_64}, Red Hat Enterprise Linux 8.3.
 
 \begin{lstlisting}[caption={Final test generator report},label={gnome-terminal-cleanup}]
     dconf reset /org/gtk/Settings/Debug/enable-inspector-keybinding
@@ -697,8 +699,50 @@ Listing \ref{gnome-terminal-report} contains the final report and summarizes the
 
 Generated test cases covered 34.2\% lines of source code and executed 42\% of functions (Figure \ref{gnome-terminal-coverage}). As described in the report, the coverage resides in the low category. After looking to the report in detail and reading the comments in source code, the analysis has shown that several parts of the GUI are not executed by the tests. It has revealed functions that are handling shortcuts that are not covered in the test cases. It is also expected that a large portion of code is related to non-GUI operations which are not covered in tests at all.
 
-\section{Gedit (flatpak)}
-\section{LibreOffice StartCenter}
+\section{GNOME Help}
+GNOME Help (or yelp) is a help viewer for GNOME\footnote{\url{https://wiki.gnome.org/Apps/Yelp}}. The application natively renders documents in various formats including HTML documents.  The UI is filled with documents and links to nevigate between them.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.85\textwidth,clip]{obrazky-figures/yelp-ui.png}
+	\caption{GNOME Help (Yelp) application UI}
+	\label{yelp_ui}
+\end{figure}
+
+\subsection{Test Generation and Results}
+
+Listing \ref{yelp-report} contains the final report and summarizes the testing performed on \textit{GNOME Help}. The developed test generator was able to generate 2415 test cases while covering the 4690 events in the application. The 6 missing events are reported by the test generator along with test sequences they are included in. Those sequences are generated because the accessibility reports and unknown action that can be performed on nodes with role name \texttt{heading}. The test generator cannot perform the action, therefore it tries to replace the associated action with the default one - Click. Regardless of the fallback to the default action, the event cannot be executed. This can be categorized as another imperfection in accessibility and can be solved by adding the role name of the node to the list of actionless nodes \texttt{rolenames.py}.
+
+\begin{lstlisting}[caption={Final test generator report},label={yelp-report}]
+    Event Coverage Report:
+    Covered Events: 4690/4696
+    Number of covered Nodes: 2415
+    Number of Generated Test Cases: 2412
+    Nodes without the coverage:
+    GNOME Help:frame: => Digital cameras:link:jump => More Information:heading:Click
+    ...
+    GNOME Help:frame: => playing videos:link:jump => More Information:heading:Click 
+    Generation time: 4:57:13.370368
+\end{lstlisting}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.85\textwidth,clip]{obrazky-figures/yelp_n_start.png}
+	\caption{Initial event flow graph of test sequences for GNOME Help}
+	\label{yelp_start}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth,clip]{obrazky-figures/yelp_n_final.png}
+	\caption{Expanded event flow graph of test sequences for GNOME Help}
+	\label{yelp_end}
+\end{figure}
+
+
+
+% \section{Gedit (flatpak)}
+% \section{LibreOffice StartCenter}
 %window detection, spawning application withing - changing window
 %bug found
 \section{Comparison with Existing Test Suites}
