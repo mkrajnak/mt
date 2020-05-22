@@ -650,7 +650,7 @@ GNOME Terminal is one of the most important applications from the GNOME applicat
 \end{figure}
 
 \subsection{Setup and Cleanup}
-Greater part of test cases is performing some changes of settings either via \textit{Preferences} dialog or through menus located at the top of the window. Preferences can change various aspects of the application, including encoding, layout of widgets, and color schemes. Those changes need to be set back to default values to make sure that test cases won't affect subsequent test cases. In \textit{Terminal}, this is achieved through 2 cleanup commands executed between applied test sequences (Code Listing \ref{gnome-terminal-cleanup}). Testing was performed on rpm package \texttt{gnome-terminal-3.28.3-1.el8.x86\_64}, Red Hat Enterprise Linux 8.3.
+Greater part of test cases is performing some changes of settings either via \textit{Preferences} dialog or through menus located at the top of the window. Preferences can change various aspects of the application, including encoding, layout of widgets, and color schemes. Those changes need to be set back to default values to make sure that test cases won't affect subsequent test cases. In \textit{Terminal}, this is achieved through 2 cleanup commands executed between applied test sequences (Code Listing \ref{gnome-terminal-cleanup}). Testing was performed with rpm package \texttt{gnome-terminal-3.28.3-1.el8.x86\_64}, Red Hat Enterprise Linux 8.3.
 
 \begin{lstlisting}[caption={Final test generator report},label={gnome-terminal-cleanup}]
     dconf reset /org/gtk/Settings/Debug/enable-inspector-keybinding
@@ -711,7 +711,7 @@ GNOME Help (or yelp) is a help viewer for GNOME\footnote{\url{https://wiki.gnome
 
 \subsection{Test Generation and Results}
 
-Listing \ref{yelp-report} contains the final report and summarizes the testing performed on \textit{GNOME Help}. The developed test generator was able to generate 2415 test cases while covering the 4690 events in the application. 
+Listing \ref{yelp-report} contains the final report and summarizes the testing performed on \textit{GNOME Help}. The developed test generator was able to generate 2415 test cases while covering the 4690 events in the application. The application didn't required any individual setup, testing was performed with rpm package \texttt{yelp-3.28.1-3.el8.x86\_64}.
 
 \begin{lstlisting}[caption={Final test generator report},label={yelp-report}]
     Event Coverage Report:
@@ -751,8 +751,41 @@ Initially, the generator started with a group of 78 nodes (Figure \ref{yelp_star
 % \section{Gedit (flatpak)}
 \section{LibreOffice StartCenter}
 
-problems with accessibiility, calc
+LibreOffice StartCenter is a document management application, it connects 7 other applications from the document suite. Each application can open and edit different for format of documents\footnote{\url{https://help.libreoffice.org/3.3/Common/Start_Center}}. LibreOffice is not a part of the GNOME application stack although it is being shipped as a default document suite in a lot of Linux distributions and has the accessibility support.
 
+\subsection{Required Implementation Changes and Limitations}
+There were several complications which required some application specific changes to be added in the implementation of test generator. 
+
+Tests are executing all applications from the Libreoffice Suite. LibreOffice Calc is a spreadsheet editor that contains theoretically an infinite number of cells that could be edited. Therefore, the application cannot be recursively explored for new nodes. A recursive search causes that the application will generate new cells until the RAM on a virtual machine is depleted. The virtual machine is unresponsive and refuse to execute commands through a remote shell. Therefore, the implementation of the test generator was altered to avoid the execution of recursive search on Libreoffice Calc. 
+
+Additionally, several issues has occured 
+
+
+\subsection{Testing and Results}
+\begin{lstlisting}[caption={Final test generator report for LibreOffice StartCenter},label={yelp-report}]
+    Event Coverage Report:
+    Covered Events: 7795/7853
+    Number of covered Nodes: 2516
+    Number of Generated Test Cases: 2315
+    Nodes without the coverage:
+    ...
+    Generation time: 11:48:49.071478s
+\end{lstlisting}
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.85\textwidth,clip]{obrazky-figures/liibreoffice_n_start.png}
+	\caption{Initial event flow graph after the start of LibreOffice StartCenter}
+	\label{libreoffice-graph1}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.85\textwidth,clip]{obrazky-figures/libreoffice_n_end.png}
+	\caption{Final event flow graph of LibreOffice StartCenter}
+	\label{libreoffice-graph2}
+\end{figure}
 
 %window detection, spawning application withing - changing window
 %bug found
