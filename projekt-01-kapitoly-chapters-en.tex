@@ -688,14 +688,14 @@ Generated test cases covered 34.2\% lines of source code and executed 42\% of fu
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=0.85\textwidth,clip]{obrazky-figures/gnome-terminal_n_start.png}
-	\caption{Initial event flow graph of the test sequence available after the start of \textit{Terminal}}
+	\caption{Initial event flow graph for GNOME Terminal}
 	\label{gnome-terminal-graph1}
 \end{figure}
 
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=0.85\textwidth,clip]{obrazky-figures/gnome-terminal_n_final.png}
-	\caption{Expanded event flow graph of test sequences, the graph demonstrates node expansion during the test generation}
+	\caption{Expanded event flow graph for GNOME Terminal}
 	\label{gnome-terminal-graph2}
 \end{figure}
 
@@ -711,7 +711,7 @@ GNOME Help (or yelp) is a help viewer for GNOME\footnote{\url{https://wiki.gnome
 
 \subsection{Test Generation and Results}
 
-Listing \ref{yelp-report} contains the final report and summarizes the testing performed on \textit{GNOME Help}. The developed test generator was able to generate 2415 test cases while covering the 4690 events in the application. The application didn't required any individual setup, testing was performed with rpm package \texttt{yelp-3.28.1-3.el8.x86\_64}.
+Listing \ref{yelp-report} contains the final report and summarizes the testing performed on \textit{GNOME Help}. The developed test generator was able to generate 2415 test cases while covering the 4690 events in the application. The application did not require any individual setup, testing was performed with rpm package \texttt{yelp-3.28.1-3.el8.x86\_64}.
 
 \begin{lstlisting}[caption={Final test generator report},label={yelp-report}]
     Event Coverage Report:
@@ -751,26 +751,50 @@ Initially, the generator started with a group of 78 nodes (Figure \ref{yelp_star
 % \section{Gedit (flatpak)}
 \section{LibreOffice StartCenter}
 
-LibreOffice StartCenter is a document management application, it connects 7 other applications from the document suite. Each application can open and edit different for format of documents\footnote{\url{https://help.libreoffice.org/3.3/Common/Start_Center}}. LibreOffice is not a part of the GNOME application stack although it is being shipped as a default document suite in a lot of Linux distributions and has the accessibility support.
+LibreOffice StartCenter (\ref{libreoffice-gui}) is a document management application, it connects 7 other applications from the document suite. Each application can open and edit different for format of documents\footnote{\url{https://help.libreoffice.org/3.3/Common/Start_Center}}. LibreOffice is not a part of the GNOME application stack although it is being shipped as a default document suite in a lot of Linux distributions and has the accessibility support.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.85\textwidth,clip]{obrazky-figures/libreoffice_GUI.png}
+	\caption{LibreOffice StartCenter}
+	\label{libreoffice-gui}
+\end{figure}
+
 
 \subsection{Required Implementation Changes and Limitations}
-There were several complications which required some application specific changes to be added in the implementation of test generator. 
+Several complications required application-specific changes to be added in the implementation of the test generator. 
 
-Tests are executing all applications from the Libreoffice Suite. LibreOffice Calc is a spreadsheet editor that contains theoretically an infinite number of cells that could be edited. Therefore, the application cannot be recursively explored for new nodes. A recursive search causes that the application will generate new cells until the RAM on a virtual machine is depleted. The virtual machine is unresponsive and refuse to execute commands through a remote shell. Therefore, the implementation of the test generator was altered to avoid the execution of recursive search on Libreoffice Calc. 
+Tests are executing all applications from the LibreOffice Suite. LibreOffice Calc is a spreadsheet editor that contains theoretically an infinite number of cells that could be edited. Therefore, the application cannot be recursively explored for new nodes. A recursive search causes that the application will generate new cells until the RAM on a virtual machine is depleted. The virtual machine is unresponsive and refuse to execute commands through a remote shell. Therefore, the implementation of the test generator was altered to avoid the execution of a recursive search on Libreoffice Calc.
 
-Additionally, several issues has occured 
+Another accessibility-related issue has started to occur when the test generation process reached certain types of dialogs (letter wizard, fax wizard, etc.). The behavior was quite similar to the previous issue, the test generator hanged on a recursive search query for a while and then failed with the error message shown in Listing \ref{error-message}.
 
+\begin{lstlisting}[caption={The error that prevents the generator from node expansion},label={error-message}]
+Failed to handle new nodes atspi_error: The application no longer exists (0)
+\end{lstlisting}
+
+ The investigation has shown the application spawns 2 windows, the first one is a previously mentioned dialog, the second one is a generic Libreoffice window that contains only a blank window with menus. The blank window is probably spawned because those wizard dialogs are not standalone applications, they belong to other applications from the LibreOffice suite. This claim is supported by the fact that the blank window only lasts as long as the dialog is opened. The blank window contains widgets but they are not available for interaction as the focus is only available for the dialog window in the front. Therefore, the blank window is an issue from the implementation perspective of the generator as it tries to perform node expansion on a window that never becomes available. Since the accessibility throws the mentioned error, it is handled as an exception and the generator continues without expansion of affected part of the application.
 
 \subsection{Testing and Results}
+LibreOffice test required some setup in the \texttt{apps.yaml} file. The application instance has to be started with a \texttt{-{}-norestore} parameter to avoid the restoration of unsaved documents from previous sessions. The user configurations files located in \texttt{\textasciitilde/.config/libreoffice/} are removed during the cleanup process. After previously discussed implementation changes, the generator has been able to perform the full run on the application and produce a test report that is partially shown in Code Listing \ref{yelp-report}.
+
+
 \begin{lstlisting}[caption={Final test generator report for LibreOffice StartCenter},label={yelp-report}]
     Event Coverage Report:
-    Covered Events: 7795/7853
+    Covered Events: 7795/7853 (99.26%) 
     Number of covered Nodes: 2516
     Number of Generated Test Cases: 2315
     Nodes without the coverage:
     ...
     Generation time: 11:48:49.071478s
 \end{lstlisting}
+
+The report shows that the achieved event coverage was not as successful as with the previous components. The majority of the failed sequences contained nodes that have the action available, but they were not available for interaction at a given time. 
+
+The report also contained several crashes. One of the crashes has been revealed quite early and was reported as a bug\footnote{\url{https://bugzilla.redhat.com/show_bug.cgi?id=1819798}}. Another group of crashes was caused by quite an interesting phenomenon. The test generator reported 6 crashes with steps to reproduce them. Manual examination of the reproducers as shown similar pattern in all crashed. Each crash by triggering an action on a button that was not available for interaction. The issue could not be reproduced from the user perspective, the event can only be sent through the accessibility. Nevertheless, this proves that the proposed solution can reveal this kind of flaws in software.
+
+Despite the fact that node expansion during the generation process was affected by the discussed issues with the accessibilitty, the achieved results are presented in the Figure \ref{libreoffice-graph1} and \ref{libreoffice-graph2}.
+
+LibreOffice documentation contains the guide\footnote{\url{https://wiki.documentfoundation.org/Development/Lcov}}  on how to obtain code coverage measurements written in the year 2013. However, I haven't been able to rebuild the whole suite with required flags. Therefore, I did not acquired code coverage measurements for this application.   
 
 
 \begin{figure}[H]
