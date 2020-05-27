@@ -110,7 +110,7 @@ Assistive technologies are receiving information from the Accessibility toolkit 
 
 \section{GNOME Accessibility Implementation Library (GAIL)}
 Today, the majority of GNOME applications are written in the GTK3 framework. The framework provides a dynamically loadable module named GAIL that implements the ATK interfaces for all GTK3 widgets. Once the module is loaded at runtime, the application is fully capable to cooperate with ATK without any further modifications.
-The GNOME desktop does not load accessibility support libraries by default, this has to be enabled by setting a special \texttt{gsettings} key, which can be achieved either by the \texttt{dconf}\footnote{https://wiki.gnome.org/Projects/dconf} editor or via the \texttt{gsettings} command-line utility using a terminal application (Code Listing \ref{gsettings}).
+The GNOME desktop does not load accessibility support libraries by default, this has to be enabled by setting a special \texttt{gsettings} key, which can be achieved either by the \texttt{dconf}\footnote{https://wiki.gnome.org/Projects/dconf} editor or via the \texttt{gsettings} command-line utility using a terminal application (Listing \ref{gsettings}).
 
 \begin{lstlisting}[numbers=none,caption={Enabling accessibility via a \texttt{gsettings} command},label={gsettings}]
 gsettings set org.gnome.desktop.interface toolkit-accessibility true
@@ -289,12 +289,12 @@ The model created as an abstraction of a test application is described as follow
 
 \theoremstyle{definition}
 \begin{definition}
-A Model $M$ is a 4-tuple: $M = (N, T, E, S, )$ representing a directed graph, where:
+A Model $M$ is a 4-tuple: $M = (N, T, E, S)$ representing a directed graph, where:
 \begin{enumerate}
 \item $N$ is a finite set of $Nodes$ (widgets associated with an executable action, or a root element);
-\item $T\ \subseteq\ Node\ \times \ Event\ \times \ Node$ is a transition relation.
-\item $E$ is a finite set of $Events$ (actions), where  $E\ =\ \{e\ |\ (n_S, e, n_T)\ \in\ T \land\ n_S,n_T\ \in \ N\}$;
-\item $S$ is a set of starting $Nodes$ (a root window element), $S\ \subseteq\ N$;
+\item $T\ \subseteq\ Nodes\ \times \ Events\ \times \ Nodes$ is a transition relation.
+\item $E$ is a finite set of $Events$ (actions), where  $E\ =\ \{e\ |\ (n_S, e, n_T)\ \in\ T \land \ e \in E \ \land \ n_S,n_T\ \in \ N\}$;
+\item $S$ is a set of starting $Nodes$ (root window element), $S\ \subseteq\ N$;
 \end{enumerate}
 \end{definition}
 
@@ -323,11 +323,11 @@ Starting from the lowest level, an instance of the class \texttt{GNode} represen
 
 \section{Test Environment}
 
-This section describes conditions that needs to be achieved in the GNOME environment for our test generator. \textbf{Subsection \ref{test_ev_setup}} addresses phenomenons that can occur in the GNOME Shell environment and need to be suppressed during the test generation. It also introduces the \textit{qecore} library designed to address this issues. \textbf{Subsection \ref{env_config}} describes a method and parameters used to configure our test generator for various applications. \textbf{Subsection \ref{flatpak_setup}} offers a brief introduction to \emph{Flatpak} applications, then explains why our test generator needs to acquire support to test such applications as well as contributions to the \textit{qecore} library that were submitted and approved. \textbf{Subsection \ref{monitoring}} concludes this section with a description how application are executed and moniter during the test generation. 
+This section describes conditions that need to be achieved in the GNOME environment for our test generator. \textbf{Subsection \ref{test_ev_setup}} addresses phenomenons that can occur in the GNOME Shell environment and need to be suppressed during the test generation. It also introduces the \textit{qecore} library designed to address this issues. \textbf{Subsection \ref{env_config}} describes a method and parameters used to configure our test generator for various applications. \textbf{Subsection \ref{flatpak_setup}} offers a brief introduction to \emph{Flatpak} applications, then explains why our test generator needs to acquire support to test such applications as well as contributions to the \textit{qecore} library that were submitted and approved. \textbf{Subsection \ref{monitoring}} concludes this section with a description how application are executed and monitored during the test generation. 
 
 \subsection{Test Environment Setup}\label{test_ev_setup}
 
-Our test generator is designed to test GUI applications that are developed to work in the GNOME Shell environment. The environment contains various features\footnote{\url{https://help.gnome.org/users/gnome-help/stable/shell-introduction.html.en}} like workspaces, notifications, the application grid, the activities overview and menus. Some of these features may change a state of the environment, and thefore negatively affect tested applications during the test generation process. Execution of an action that brings the environment to some of those states takes the focus from the tested application back to GNOME Shell, thus blocking any further interaction. A notification might collide with the user interface of the tested application and block the execution of an action during the test case. These factors need to be avoided to ensure stability during the test generation and the test execution as well. The setup must also be able to recover the environment from potential test case failures and will not influence the execution of the subsequent test cases. 
+Our test generator is designed to test GUI applications that are developed to work in the GNOME Shell environment. The environment contains various features\footnote{\url{https://help.gnome.org/users/gnome-help/stable/shell-introduction.html.en}} like workspaces, notifications, the application grid, the activities overview and menus. Some of these features may change a state of the environment, and therefore negatively affect tested applications during the test generation process. Execution of an action that brings the environment to some of those states takes the focus from the tested application back to GNOME Shell, thus blocking any further interaction. A notification might collide with the user interface of the tested application and block the execution of an action during the test case. These factors need to be avoided to ensure stability during the test generation and the test execution as well. The setup must also be able to recover the environment from potential test case failures and will not influence the execution of the subsequent test cases. 
 
 The required setup for the test execution is implemented in the module \textit{qecore}. The module is designed for test automation of GNOME desktop applications and contains various measures designed to avoid occurrences of unintentional environment events and focus on a tested application. The module is bound to \textit{dogtail} and it is intended to be used with \textit{behave} framework \cite{qecore}. The module is actively developed by quality engineers from Red Hat.
 
@@ -343,7 +343,7 @@ Assurance of compatibility with various applications across the GNOME ecosystem 
 
 The metadata is gathered in a configuration file written in the YAML\footnote{\url{https://yaml.org/}} language. The reasons behind choosing YAML is syntax simplicity and human readability in comparison with JSON\footnote{\url{https://www.json.org/json-en.html}} or XML\footnote{\url{https://www.w3.org/XML/}}, followed by the reliable support in Python provided by the library \textit{pyyaml} \cite{yaml}.
 
-Our generator uses the configuration file \texttt{apps.yaml} where we store records about all tested applications. An example for an application record can be seen in Code Listing \ref{apps_yaml}. 
+Our generator uses the configuration file \texttt{apps.yaml} where we store records about all tested applications. An example for an application record can be seen in Listing \ref{apps_yaml}. 
 
 \begin{lstlisting}[language=yaml,caption={
 An example of the apps.yaml entry for LibreOffice StartCenter},label={apps_yaml}]
@@ -370,23 +370,23 @@ An application record starts with an application name on the top level. The appl
      \item \texttt{params} --  The value is required if the application needs to be run with custom command line parameters. All parameters should be entered in one string, separated with a space.
      \item \texttt{cleanup\_cmds} -- The value may contain a list of commands that will be executed after the generation of each test case. Executed commands should always restore an application to its default settings. The commands are used during the execution of generated test cases, at the end of every test case. 
      \item \texttt{packages} - required for execution in the CI environment, contains a list of rpm\footnote{\url{https://rpm.org/}} packages required to be installed to both generate and execute tests
-     \item \texttt{flatpak} - required if a tested application is a Flatpak
+     \item \texttt{flatpak} - required if a tested application is a flatpak
 \end{itemize}
 
 \subsection{Flatpak Applications Setup}\label{flatpak_setup}
 
-This subsection is dedicated to a brief introduction to Flatpak applications. Further, we discuss an effort that has been done to support Flatpak application in our test generator.
+This subsection is dedicated to a brief introduction to Flatpak applications, followed by explanation why Flatpaks needed to be integrated in our test generator. Further, we discuss an effort that has been done to support Flatpak applications in our test generator.
 
-Flatpak\footnote{\url{https://flatpak.org/}} is a technology for building and distributing desktop applications on Linux. Flatpak aims to solve the problem with cross-platform distribution of packages on Linux, thus avoiding problems with different package managers used across Linux distributions. Applications, or so-called flatpaks, are delivered to users regardless of the lifecycle of the underlying Linux distribution. The system implements a set of sandboxing technologies, to isolate flatpaks from each other and the system, thus providing security benefits to users~\cite{flatpak}.
+\paragraph{Flatpak.} Flatpak\footnote{\url{https://flatpak.org/}} is a technology for building and distributing desktop applications on Linux. Flatpak aims to solve the problem with cross-platform distribution of packages on Linux, thus avoiding problems with different package managers used across Linux distributions. Applications, or so-called flatpaks, are delivered to users regardless of the lifecycle of the underlying Linux distribution. The system implements a set of sandboxing technologies, to isolate Flatpaks from each other and the system, thus providing security benefits to users~\cite{flatpak}.
 
-The majority of GNOME applications are also available through flatpak. A dedicated flatpak repository \textit{Nightly GNOME Apps} contains the latest development versions of GNOME applications. With Flatpak, those applications are installed alongside their stable versions. This gives us the potential to test the application much sooner before it is released to distributions. This is a benefit behind the integration of flatpak support to this work. The main repository for flatpak applications called Flathub\footnote{\url{https://flathub.org/home}} contains hundreds of applications developed in various frameworks and programming languages. However, the effort done by this work only supports applications developed in GTK3 as they obtain the accessibility support by design.
+The majority of GNOME applications are also available through flatpak. A dedicated flatpak repository \textit{Nightly GNOME Apps} contains the latest development versions of GNOME applications. With flatpak, those applications are installed alongside their stable versions. This gives us the potential to test the application much sooner before it is released to distributions. This is a benefit behind the integration of flatpak support to this work. The main repository for flatpak applications called Flathub\footnote{\url{https://flathub.org/home}} contains hundreds of applications developed in various frameworks and programming languages. However, the effort done by this work only supports applications developed in GTK3 as they obtain the accessibility support by design.
 
-There are several differences in the runtime perspective between flatpaks and non-flatpak applications. Each application has a unique name, e.g.: \texttt{org.gnome.gedit}. A unique name is required for every operation executable through the \texttt{flatpak} command-line utility. The utility not only serves as a package manager able to install, remove, downgrade and update flatpaks, it also provides a sandbox to run flatpaks. Those differences demand certain changes in the runtime used for the test execution and the test generation. 
+\paragraph{Flatpak Integration.} There are several differences in the execution process between flatpaks and non-flatpak applications. Every flatpak application has a unique name, e.g.: \texttt{org.gnome.gedit}. A unique name is required for every operation executable through the \texttt{flatpak} command-line utility. The utility not only serves as a package manager able to install, remove, downgrade and update flatpaks, it also provides a sandbox to run flatpaks. Those differences demand certain changes in the runtime used for the test execution and the test generation. 
 
 Considering the test execution, the approach used in the \textit{qecore's} \texttt{Application} class should be suitable for testing flatpaks. However, the initial testing emphasized the previously mentioned differences, and therefore we developed the subclass \texttt{Flatpak} that inherits the methods from the \texttt{Application} class and reimplements some of them do address those differences. The most important changes are:
 
 \begin{itemize} 
-    \item \texttt{\_\_init\_\_} --the constructor performs a validity check on inserted flatpak ID, the format requires two dots, e.g. \texttt{org.gnome.gedit},
+    \item \texttt{\_\_init\_\_} -- the constructor performs a validity check on inserted flatpak ID, the format requires two dots, e.g. \texttt{org.gnome.gedit},
     \item \texttt{start\_via\_command} -- runs a flatpak via only via command and with the flatpak command-line utility, e.g. \texttt{flatpak run <id>},
     \item \texttt{kill\_application} -- terminates a flatpak via command e.g. \texttt{flatpak kill <id>},
     \item \texttt{get\_desktop\_file\_path} -- performs a recursive search for flatpak's \texttt{.desktop} file in two possible locations:
@@ -403,27 +403,26 @@ As discussed in Section \ref{test_ev_setup}, the \textit{qecore} library is desi
 
 \subsection{Execution and Monitoring of an Application}\label{monitoring}
 
-This subsection discribed how our test generator executes and monitors applications.
-% TODO
-Before the generation process starts, it is necessary to have the implementation for monitoring the state of tested applications and acquire the ability to perform start and stop operations. The test generation process performs various actions available in an application that might change settings or layout of the application. Generation of every test case must start from the same state which should satisfy the following conditions: 
+This subsection describes the method used by our test generator to execute and monitor tested applications. The implementation for the non-flatpak applications is encapsulated in the class \texttt{App}. The class \texttt{FlatpakApp} achieves the same goals for the flatpak applications.
+
+\paragraph{Execution.} The test generation process performs various actions available in an application that might change settings or layout of the application. Therefore, every test case must start from the same state which should satisfy the following conditions: 
 \begin{enumerate}
     \item an application is not running, if so, force the application to stop;
     \item reset the application's settings to the default state by performing a predefined custom cleanup;
-    \item start a new instance of the application with the default settings.
+    \item start a new instance of the application with the default settings;
+    \item make sure that application is ready for an interaction.
 \end{enumerate}
 
-Several indicators can be monitored while the application is being tested. The most essential one is to be able to safely determine if the application is running at the moment or not. This can be done either by examination of the \textit{pid} (process id) belonging to the application process or by relying on AT-SPI. If the application tree is not available, it can be certainly assumed that the application instance is not running. This statement also applies vice versa, so an assertion that an application has started is achievable in the same way. The implementation takes advantage of \textit{dogtail's} \texttt{Tree.Node.Applications()} call, returning a list of applications currently exposed to the accessibility bus.
+\paragraph{Monitoring.} Several indicators can be monitored while the application is being tested. The most essential one is to be able to safely determine if the application is running at the moment or not. This can be done either by examination of the \textit{pid} (process id) belonging to the application process or by relying on AT-SPI. If the application tree is not available, it can be certainly assumed that the application instance is not running. This statement also applies vice versa, so an assertion that an application has started is achievable in the same way. The implementation takes advantage of \textit{dogtail's} \texttt{Tree.Node.Applications()} call, returning a list of applications currently exposed to the accessibility bus.
 
 Furthermore, it is also necessary to perform certain checks during the time an application is being interacted with. Therefore, every tested application will be run as a sub-process, which enables us to capture the output generated by tested applications to standard streams (\textit{stdout, stderr}). Once an application has been terminated, it also allows us to check the return codes. The implementation relies on the Python's standard library \texttt{subprocess}. 
 
 The output generated to the standard stream is checked for errors defined in the designated configuration file. In case of error throughout the generation process, an error message is printed immediately to warn about the possible bug in tested applications. The warning contains the number identifying the test in which the error occurred, a full error message, and a return code. All other captured messages, e.g., warnings or deprecation messages from the GTK framework are saved to one log file, in a folder where the tests are generated. The messages are being appended, so the log file can be checked at any time during the generation process. Every line contains the test number, so it can be easily determined when the message occurred and match it with the reproducer from the given test case.
 
-The implementation of monitoring for the non-flatpak applications is encapsulated in the class \texttt{App}. The class \texttt{FlatpakApp} achieves the same goals for the flatpak applications.
-
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=1\textwidth,clip]{obrazky-figures/TestGen_class_diagram.pdf}
-	\caption{Class diagram describing an overview over the implementation of the test generator}
+	\caption{A class diagram providing an overview over the implemented test generator}
 	\label{test_gen}
 \end{figure}
 
@@ -462,7 +461,7 @@ The \texttt{before\_scenario} function is executed before every test case (scena
 
 The \texttt{after\_scenario} function is called after the execution of every test case, regardless of its results. The result is then submitted to the generated test report.
 
-The folder \texttt{steps} contains source files with the implementation of the \textit{steps} used in the \textit{behave} scenarios. The implementation of steps is divided into two files. The module \texttt{ocr\_steps.py} contains only one \textit{behave} step which encapsulates the implementation and optimization used for the verification of the string on the screen. The module \texttt{steps.py} contains general implementation of steps. The steps are functions implemented in Python with the \texttt{step} decorator from the \textit{behave} framework. The decorators serve as a wrapper to call the Python functions from the \texttt{.feature} files. So in the case of this project, the steps written in the test cases are function calls, the functions are defined in these modules. The definition of the \texttt{@step} decorator (Code Listing \ref{step_definition}) contains variables, thus allowing us to keep the code base as minimal as possible.
+The folder \texttt{steps} contains source files with the implementation of the \textit{steps} used in the \textit{behave} scenarios. The implementation of steps is divided into two files. The module \texttt{ocr\_steps.py} contains only one \textit{behave} step which encapsulates the implementation and optimization used for the verification of the string on the screen. The module \texttt{steps.py} contains general implementation of steps. The steps are functions implemented in Python with the \texttt{step} decorator from the \textit{behave} framework. The decorators serve as a wrapper to call the Python functions from the \texttt{.feature} files. So in the case of this project, the steps written in the test cases are function calls, the functions are defined in these modules. The definition of the \texttt{@step} decorator (Listing \ref{step_definition}) contains variables, thus allowing us to keep the code base as minimal as possible.
 
 \begin{lstlisting}[
 style=mypython,
@@ -484,10 +483,12 @@ The file \texttt{gnome-terminal.log} aggregates log messages produced by a teste
 
 \section{Test Case Generation}
 
+This section describes and environment created for tested applications by our test generator, and also makes tests executable after the test generation process.
+
 The test generator implementation is encapsulated in the class \texttt{TestGen} (class diagram in Figure \ref{test_gen}). The behavior of the generator can be also influenced by several command-line arguments that will be described later in this work. Based on the parameters (\texttt{flatpak} item in \texttt{apps.yaml}), the instance of either the \texttt{App} or the \texttt{FlatpakApp} is created. 
 
 The generator then creates a copy of the default project structure and injects the files inside the project structure with values that correspond to the application that is going to be tested (Figure \ref{project_folder}). Namely, the files \texttt{environment.py}, \texttt{mapper.yaml}, and \texttt{cleanup.sh} contain placeholders (tags) that are replaced by values defined in \texttt{apps.yaml}. Just note that no Python code is being generated during the process. The default project already contains all the predefined \textit{behave} steps required to execute generated test cases.
-The next sections are dedicated to the details of the generation algorithm. The Algorithm \ref{test_gen_algorithm} contains a shorter version written in a pseudocode. 
+The next sections are dedicated to the details of the generation algorithm. Algorithm \ref{test_gen_algorithm} contains a shorter version written in a pseudocode. 
 
 \begin{center}
 \begin{algorithm}[H]
@@ -568,49 +569,67 @@ The generator distinguishes between several roles of the discovered nodes. The a
 
 The expansion during the test case generation can significantly increase the execution time. The test generator implements an option \texttt{{-}{-}shallow} that disables the expansion and generates test cases only from the model obtained from after the start of the application. The option gives testers the ability to obtain fundamental test cases that can be reviewed and updated in a much shorter time.
 
-\subsection{Generating Reports}
+% \subsection{Generating Reports}
 
-\section{OCR integration}
-The main goal of the OCR integration in this work is to provide an additional level of verification of string values presented by applications and thus not rely purely on AT-SPI. However, the integration of OCR into the generated test cases has to be reliable to avoid false-positive test results. For the reasons mentioned in \ref{ocr_conclusion}, the integration of OCR has to be properly tested, the implementation has to contain image preprocessing optimizations and configuration to achieve stable results. Tesseract offers several options that allow to optimize string detection and text analysis. One of them is the definition of the recognized language. It is assumed that most of the tested applications will use the English language and therefore, the dataset trained for the English language is used.
+\section{OCR Integration}
+In this section we present the integration of OCR in our work. Subsection \ref{OCR_optimizations} is dedicated to the implementation of image preprocessing methods in our test generator. Subsection \ref{OCR_steps} described integration of the OCR in executable test cases.  
 
-\subsection{Screenshot Preprocessing and Optimizations}
-As discussed in \ref{OCR_section}, Tesseract is less prone to errors when operating with images containing black text on a white background. Therefore the safest option, is a conversion of images with thresholding to binary colors (black and white). It also has to be considered that some applications are using darker color themes or contain parts with different color schemes. To avoid problems with text detection connected to this, the string is always searched in two images. The first one is a binarized copy of the original image, the second one is a copy of the binarized image with inverted colors. This ensures that the Tesseract's OCR engine has the best possible conditions to obtain the string from the screen. Given that the string is present on the screen, it should be found regardless of a theme set in an application. A demonstration of the image conversions is shown in Figure \ref{ocr_conversion}, containing 3 images, ordered from the top: the original image, the binarized image, and the inverted binarized image. 
+The main goal of the OCR integration in this work is to provide an additional level of verification of string values presented by applications and thus not rely purely on AT-SPI.
+However, the integration of OCR into the generated test cases has to be reliable to avoid false-positive test results. For the reasons mentioned in Section \ref{ocr_conclusion}, the implementation has to contain image preprocessing optimizations and configuration to achieve stable results. Tesseract offers several options that allow to optimize string detection and text analysis. One of them is the definition of the recognized language. It is assumed that most of the tested applications will use the English language and therefore, the dataset trained for the English language is used.
+
+\subsection{Screenshot Preprocessing and Optimizations}\label{OCR_optimizations}
+In this subsection, we discuss the implemented optimizations that were required to achieve reliable results with the Tesseract's OCR engine in our test generator.
+
+As discussed in \ref{OCR_section}, Tesseract is less prone to errors when operating with images containing black text on a white background. Therefore, we used a thresholding method to convert screenshots to binary colors (black and white). However, some applications use darker color themes or contain parts with different color schemes. If we used the thresholding method with such application it would provide us with an opposite result. Therefore, our solution always extracts strings from two images. The first one is a binarized copy of the original image, the second one is a copy of the binarized image with inverted colors. This ensures that the Tesseract's OCR engine has the best possible conditions to obtain the string from the screen. Given that the string is present on the screen, it should be found regardless of a theme set in an application. A demonstration of the image conversions is shown in Figure \ref{ocr_conversion}, containing 3 images, ordered from the top: the original image, the binarized image, and the inverted binarized image. 
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=1\textwidth,clip]{obrazky-figures/OCR_conversion.jpg}
-	\caption{Steps of image preprocessing for Optical Character Recognition tool Tesseract, from the top: the original image, the binarized image, the inverted binarized image}
+	\includegraphics[width=0.9\textwidth,clip]{obrazky-figures/OCR_conversion.png}
+	\caption{Steps of image preprocessing for the OCR, from the top: the upscaled original image, the binarized image, the inverted binarized image}
 	\label{ocr_conversion}
 \end{figure}
 
-Listing \ref{OCR_text1} demonstrates the results obtained from the image, where the source image contains white text on a black background. The Tesseract's OCR engine manages to extract certain strings from the screen, although the results are not reliable and thus may lead to false-positive reports during the test execution.  
 
-\begin{lstlisting}[caption={Text generated from the binarized image in Figure \ref{ocr_conversion}},label={OCR_text1}]
-Pet) Terminal ~ EV ee muerre. Ty Pa) Ones
-Peels ee?
 
-Ca sa
-[test@localhost ~]$ 
+\begin{lstlisting}[
+caption={Extracted text without optimizations Figure \ref{ocr_conversion}},label={OCR_text1}]
+s
+ALY
+O BTEE T
+ERM
+test@localhost:
+8
+Edit View Search Terminal Help
+[test@localhost ~1$ Hello world![]
 \end{lstlisting}
 
-Listing \ref{OCR_text2} is showing the result of the character recognition when the image contains black text on a white background. When compared to Listings \ref{OCR_text1}, it proves an increase of the efficiency achieved with the implemented optimization. The result contains almost all strings shown on the screen with some random characters created as an attempt to read icons located in the right top corner of the window. The image conversions are achieved through methods from the \textit{OpenCV} library. 
+Listing \ref{OCR_text1} demonstrates the results obtained from the original image without any uptimizations. The Tesseract's OCR engine manages to extract certain strings from the screen, although the results are not reliable and thus may lead to false-positive reports during the test execution. Further experiments have shown additional issues with text formatting as well as difficulties with recognition of similarly looking letters. An example can be seen on line 8 (see Listing \ref{OCR_text1}), where character \texttt{]} was misinterpreted as character \texttt{1}. These issues were suppressed by upscaling the resolution of the original image to 3,200 x 2,400 pixels.
 
-\begin{lstlisting}[caption={Text generated from the inverted binarized image in Figure \ref{ocr_conversion}},label={OCR_text2}]
- Activities Terminal ~ Apr 18 00:22:36 AO Or
-test@localhost:~ - 9 x
-
+\begin{lstlisting}[caption={Extracted text with optimizations},label={OCR_text2}]
+Activities
+Terminal ~
+a4
+v
+May 27 16:13:56 @
+test@localhost:~
 File Edit View Search Terminal Help
-[test@localhost ~]$
+[test@localhost ~]$ Hello World![}
 \end{lstlisting}
 
-Further experiments have shown additional issues with text formatting and recognition of certain letters. These facts led to another set of optimizations that were implemented to avoid false-positive test cases. A search for a string containing multiple words with white spaces might fail because the result might not contain all the white-spaces. Strings containing symbols …, -, \_, and — could be easily exchanged during the recognition. Those letters are not as important as letters representing the actual text. Therefore, a search for a match in the extracted text is performed twice. The first attempt tries to match the string with white spaces and full formatting. If that attempt fails, the second attempt breaks the string into words and tries to match every word separately. The second attempt is also followed by a warning message that the string was not matched in the original version.
+Listing \ref{OCR_text2} shows results achieved with image preprocessing methods. when we  contains the extracted strings with  When compared to Listings \ref{OCR_text1}, it proves an increase of the efficiency achieved with the implemented optimization. The result contains all important strings shown on the screen. Additionally, the OCR engine reports some random characters which are probably caused by a misinterpretation of a group of smaller icons in the picture. The image upscaling is achieved through the \textit{Pillow}\footnote{\url{https://pypi.org/project/Pillow/}} library, the image conversions are implemented through methods from the \textit{OpenCV} library. 
 
-The Tesseract has shown occasional difficulties with recognition of similarly looking letters. The most affected character was \textbf{I} exchanged for \textbf{1}, followed by \textbf{S} exchanged for \textbf{5}. Despite these occasional cases, the implementation works quite reliably both during the test generation process and the execution process. Nevertheless, the time consumed by taking screenshots during the generation process is significant. Therefore, the developed tool has the ability to disable the generation of the OCR steps during the generation of test cases through the command line parameter \texttt{-{}-disable-OCR}. If the generated test cases already contain steps performing OCR checks and are intended to be executed without them, the tests can be executed with the shell variable \texttt{OCR=False}. The defined variable will cause skipping of the OCR checks, although they will still be shown in the test logs as executed. This is caused by the limitation of the behave framework as it only allows to skip whole test scenarios. The test results executed with the variable will contain a warning message about skipped OCR steps.
+The time consumed by taking screenshots during the generation process is significant. Therefore, the developed tool has the ability to disable the generation of the OCR steps during the generation of test cases through the command line parameter \texttt{-{}-disable-OCR}. If the generated test cases already contain steps performing OCR checks and are intended to be executed without them, the tests can be executed with the shell variable \texttt{OCR=False}. The defined variable will cause skipping of the OCR checks, although they will still be shown in the test logs as executed. This is caused by the limitation of the behave framework as it only allows one to skip whole test scenarios. Tests executed with the variable set to skip the OCR steps will contain a warning message.
 
-\subsection{Implemented Steps}
-The results obtained from experiments with the OCR were implemented to a single behave step. The step contains a string variable that should be found on the screen at a specific moment during the test execution. The process involves taking a screenshot via \texttt{gnome-screenshot} utility. It continues with image preprocessing and extraction of the text from two variants of images. Finally, an assertion is made to confirm the presence of the string on the screen. Listing \ref{ocr_test} contains a test case generated for \textit{Gedit} flatpak, in this case the OCR should confirm the presence of the \textit{Save} button on the screen. The introduced optimizations from the last section should help to avoid false-positive results. However, if the OCR fails to find the string on the screen, the error message printed to a log will contain all the extracted text. This should help the testers with easier identification of false-positives.
 
-\begin{lstlisting}[language=Gherkin,caption={Test case demonstrating the OCR integration in test cases},label={ocr_test}]
+\subsection{Implemented Steps}\label{OCR_steps}
+This subsection demonstrates a \textit{behave} step that was implemented to integrate the OCR verification into test cases. 
+
+The results obtained from experiments with the OCR were implemented to a single behave step. The step contains a string variable that should be found on the screen at a specific moment during the test execution. The process involves taking a screenshot via the \texttt{gnome-screenshot} utility. It continues with image preprocessing and extraction of the text from two variants of images. Finally, an assertion is made to confirm the presence of the string on the screen. 
+
+Listing \ref{ocr_test} contains a test case generated for \textit{LibreOffice StartCenter} with two OCR steps. The OCR engine confirms the presence of the string \texttt{Spreadsheet} on line 7. Another OCR step is on line 10, where the OCR confirms a presence of the window title \texttt{Untitled 1 - LibreOffice Calc} on the screen.
+
+\begin{lstlisting}[language=Gherkin,caption={
+A test case demonstrating the integration of OCR into test cases},label={ocr_test}]
 @1_Spreadsheet
 Scenario: libreoffice-startcenter: Spreadsheet
   * Start: "libreoffice-startcenter" via command "libreoffice --norestore" in session
@@ -623,6 +642,7 @@ Scenario: libreoffice-startcenter: Spreadsheet
   * OCR: "Untitled 1 - LibreOffice Calc" is shown on the screen
 \end{lstlisting}
 
+OCR steps are not added to test cases automatically as our test generator may encounter strings that contains various characters and have various length. An OCR step is generated to a test case only if the test generator performs a successful OCR check on a given string. Failed OCR checks are reported immediately during the test generation process. The OCR check done in advance by the test generator and the optimizations discussed in Subsection \ref{OCR_optimizations} should prevent an occurence of false-positive results in test cases caused by the OCR. 
 
 % implementation and testing, running in a VM and stuff
 
@@ -666,7 +686,7 @@ This section is dedicated to the \verb|gcov| tool and the code coverage analysis
 
 To obtain a measurement of the code coverage, it is required to compile the application with \verb|gcc|/\verb|g++| and two extra parameters \verb|-fprofile-arcs| and \verb|-ftestcoverage|. Running the compiled binary with the \verb|gcov| tool yields a percentage of the executed code located in source files. Measurements can be obtained for any software written in C/C++ \cite{gcov}.
 
-To obtain measurements, tests must be executed with a custom binary, compiled with the mentioned parameters. Once the custom binary is executed, files with extensions \texttt{.gcda} and \texttt{.gcno} should appear in the directory where the binary is located. Measurements are aggregated throughout the test execution and the code coverage is reported to the special files with the mentioned extensions. Then, the \texttt{lcov} tool is used to aggregate the measurements and generate a report in two steps (Code Listing \ref{lcov_report}). The first command takes the\texttt{.gcda} and \texttt{.gcno} files and generates a \texttt{.info} file with coverage information. The second command takes the \texttt{info} file and generates a detailed HTML report. The report contains every source file (\texttt{.c} file) along with the percentage of covered functions and lines.
+To obtain measurements, tests must be executed with a custom binary, compiled with the mentioned parameters. Once the custom binary is executed, files with extensions \texttt{.gcda} and \texttt{.gcno} should appear in the directory where the binary is located. Measurements are aggregated throughout the test execution and the code coverage is reported to the special files with the mentioned extensions. Then, the \texttt{lcov} tool is used to aggregate the measurements and generate a report in two steps (Listing \ref{lcov_report}). The first command takes the\texttt{.gcda} and \texttt{.gcno} files and generates a \texttt{.info} file with coverage information. The second command takes the \texttt{info} file and generates a detailed HTML report. The report contains every source file (\texttt{.c} file) along with the percentage of covered functions and lines.
 
 \begin{lstlisting}[language=Gherkin,caption={Shell commands used to generate an HTML report with the \texttt{lcov} tool},label={lcov_report}]
     lcov -c -d . -o app.info
@@ -692,7 +712,7 @@ GNOME Terminal (Figure \ref{terminal-gui}) is one of the most important applicat
 \end{figure}
 
 \subsection{Setup and Cleanup}
-A large part of test cases generated for GNOME Terminal performs some changes of settings either via the \textit{Preferences} dialog or through menus located at the top of the window. Preferences can change various aspects of the application, including the text encoding, layout of widgets, and color schemes. Those changes need to be set back to default values to make sure that test cases will not affect subsequent test cases. In \textit{Terminal}, this is achieved through 2 cleanup commands (Code Listing \ref{gnome-terminal-cleanup}) that are executed at the end of every test case. Testing was performed with the rpm package \texttt{gnome-terminal-3.28.3-1.el8.x86\_64}, Red Hat Enterprise Linux 8.3.
+A large part of test cases generated for GNOME Terminal performs some changes of settings either via the \textit{Preferences} dialog or through menus located at the top of the window. Preferences can change various aspects of the application, including the text encoding, layout of widgets, and color schemes. Those changes need to be set back to default values to make sure that test cases will not affect subsequent test cases. In \textit{Terminal}, this is achieved through 2 cleanup commands (Listing \ref{gnome-terminal-cleanup}) that are executed at the end of every test case. Testing was performed with the rpm package \texttt{gnome-terminal-3.28.3-1.el8.x86\_64}, Red Hat Enterprise Linux 8.3.
 
 \begin{lstlisting}[caption={The cleanup commands required to reset GNOME Terminal to the default settings},label={gnome-terminal-cleanup}]
     dconf reset /org/gtk/Settings/Debug/enable-inspector-keybinding
@@ -815,7 +835,7 @@ Failed to handle new nodes atspi_error: The application no longer exists (0)
  The investigation has shown the application spawns 2 windows, the first one is the previously mentioned dialog, the second one is a generic LibreOffice window that contains only a blank window with menus. The blank window is probably spawned because those wizard dialogs are not standalone applications, they belong to other applications from the LibreOffice suite. This claim is supported by the fact that the blank window only lasts as long as the dialog is opened. The blank window contains widgets but they are not available for interaction as the focus is only available for the dialog window in the front. Therefore, the blank window is an issue from the implementation perspective of the generator as it tries to perform node expansion on a window that never becomes available. Since the accessibility system throws the mentioned error, it is handled as an exception and the generator continues without expansion of the affected part of the application.
 
 \subsection{Testing and Results}
-Testing LibreOffice required some setup in the \texttt{apps.yaml} file. The application instance has to be started with the \texttt{-{}-norestore} parameter to avoid the restoration of unsaved documents from previous sessions. The user configurations files located in \texttt{\textasciitilde/.config/libreoffice/} are removed during the cleanup process. After the previously discussed implementation changes, the generator has been able to perform a full run on the application and produces a test report that is partially shown in Code Listing \ref{yelp-report}.
+Testing LibreOffice required some setup in the \texttt{apps.yaml} file. The application instance has to be started with the \texttt{-{}-norestore} parameter to avoid the restoration of unsaved documents from previous sessions. The user configurations files located in \texttt{\textasciitilde/.config/libreoffice/} are removed during the cleanup process. After the previously discussed implementation changes, the generator has been able to perform a full run on the application and produces a test report that is partially shown in Listing \ref{yelp-report}.
 
 \begin{lstlisting}[caption={Final test generator report for LibreOffice StartCenter},label={yelp-report}]
     Event Coverage Report:

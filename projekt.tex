@@ -68,9 +68,7 @@
 % to avoid unnecessary replacements in the API descriptions etc.
 \csdoublequotesoff
 
-
-
-% added by mkrajnak\
+% added by mkrajnak
 \usepackage{amsthm}
 
 \theoremstyle{definition}
@@ -96,12 +94,14 @@
 		Scenario Outline,
 		Examples
 	},
+	basicstyle=\ttfamily,
 	sensitive=true,
 	morecomment=[l]{\#},
 	morestring=[b]",
 	morestring=[b]',
 	numbers=left,
-	frame=tb
+	frame=tb,
+	breaklines=true
 }
   
   % forked from https://tex.stackexchange.com/questions/152829/how-can-i-highlight-yaml-code-in-a-pretty-way-with-listings
@@ -133,6 +133,8 @@
   aboveskip=20pt,
   belowskip=10pt
 }
+\renewcommand\lstlistingname{Listing}
+\renewcommand\lstlistlistingname{Listing}
 % added by mkrajnak
 
 % =======================================================================
