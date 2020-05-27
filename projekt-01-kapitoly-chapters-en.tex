@@ -283,16 +283,18 @@ Figure 4.1 describes an overview of the workflow when testing with the proposed 
 From the testing perspective, the proposed tool combines several testing techniques. The extracted AT-SPI metadata create a foundation for a simplified model of the application by partially adapting the model-based testing technique. Since the test cases are derived from the model without any knowledge about the implementation of the tested application, the tool resides in the category of black-box testing. The knowledge about the SUT provided by the model allows the tool to benefit from the approaches described in the random input testing and random walk tools in a more deterministic way. The tool can be characterized as a semi-smart tool as it can detect certain crashes of the SUT during the test generation and immediately report them with a reproducer. The results of the test generation process are test cases that may be adjusted and executed again. The tests are executable in the CI/CD pipeline that can be triggered at any stage of the application development and report the results without manual retesting.
 
 \section{Model Extraction}\label{model}
+ 
+
 The model created as an abstraction of a test application is described as follows: 
 
 \theoremstyle{definition}
 \begin{definition}
-A Model $M$ is a 4-tuple: $M = (N, E, S, T)$ representing a directed graph, where:
+A Model $M$ is a 4-tuple: $M = (N, T, E, S, )$ representing a directed graph, where:
 \begin{enumerate}
 \item $N$ is a finite set of $Nodes$ (widgets associated with an executable action, or a root element);
+\item $T\ \subseteq\ Node\ \times \ Event\ \times \ Node$ is a transition relation.
 \item $E$ is a finite set of $Events$ (actions), where  $E\ =\ \{e\ |\ (n_S, e, n_T)\ \in\ T \land\ n_S,n_T\ \in \ N\}$;
 \item $S$ is a set of starting $Nodes$ (a root window element), $S\ \subseteq\ N$;
-\item $T\ \subseteq\ Node\ \times \ Event\ \times \ Node$ is a transition relation.
 \end{enumerate}
 \end{definition}
 
@@ -320,9 +322,11 @@ However, the model does not allow to execute the associated actions directly, as
 Starting from the lowest level, an instance of the class \texttt{GNode} represents one node from the tree. Several attributes are copied from the original \texttt{dogtail.tree.Node} instance, including attributes storing the pieces of information about the parent node, the data describing the state of the node, the list of children, and if available, the name of the action method. The list of children is also composed of instances of the \texttt{GNode} class, so the tree is recreated recursively. Therefore, the model can hold all information about tested applications, without relying on their state. An instance of the \texttt{GTree} can represent either a whole application or a smaller part of the application e.g.: a dialog or a menu. As discussed previously, this offline model of the application tree also contains a lot of nodes without the ability of interaction, which needs to be filtered out. Those nodes are identified by the list of \texttt{RoleName}s that are gathered in the separate file \texttt{rolenames.py}. Finally, the class \texttt{TestTree} serves as a wrapper that filters those nodes and preserves the parent-child relationship. The result of this process is an instance of the \texttt{TestTree} object and it contains only nodes required to generate test cases. 
 
 \section{Test Environment}
+
 This section describes conditions that needs to be achieved in the GNOME environment for our test generator. \textbf{Subsection \ref{test_ev_setup}} addresses phenomenons that can occur in the GNOME Shell environment and need to be suppressed during the test generation. It also introduces the \textit{qecore} library designed to address this issues. \textbf{Subsection \ref{env_config}} describes a method and parameters used to configure our test generator for various applications. \textbf{Subsection \ref{flatpak_setup}} offers a brief introduction to \emph{Flatpak} applications, then explains why our test generator needs to acquire support to test such applications as well as contributions to the \textit{qecore} library that were submitted and approved. \textbf{Subsection \ref{monitoring}} concludes this section with a description how application are executed and moniter during the test generation. 
 
 \subsection{Test Environment Setup}\label{test_ev_setup}
+
 Our test generator is designed to test GUI applications that are developed to work in the GNOME Shell environment. The environment contains various features\footnote{\url{https://help.gnome.org/users/gnome-help/stable/shell-introduction.html.en}} like workspaces, notifications, the application grid, the activities overview and menus. Some of these features may change a state of the environment, and thefore negatively affect tested applications during the test generation process. Execution of an action that brings the environment to some of those states takes the focus from the tested application back to GNOME Shell, thus blocking any further interaction. A notification might collide with the user interface of the tested application and block the execution of an action during the test case. These factors need to be avoided to ensure stability during the test generation and the test execution as well. The setup must also be able to recover the environment from potential test case failures and will not influence the execution of the subsequent test cases. 
 
 The required setup for the test execution is implemented in the module \textit{qecore}. The module is designed for test automation of GNOME desktop applications and contains various measures designed to avoid occurrences of unintentional environment events and focus on a tested application. The module is bound to \textit{dogtail} and it is intended to be used with \textit{behave} framework \cite{qecore}. The module is actively developed by quality engineers from Red Hat.
@@ -334,6 +338,7 @@ fixes\footnote{\url{https://gitlab.com/dogtail/qecore/-/merge_requests/24}}\text
 
 
 \subsection{Test Generator Configuration}\label{env_config}
+
 Assurance of compatibility with various applications across the GNOME ecosystem requires that some metadata describing the tested application has to be provided before the test generation process. 
 
 The metadata is gathered in a configuration file written in the YAML\footnote{\url{https://yaml.org/}} language. The reasons behind choosing YAML is syntax simplicity and human readability in comparison with JSON\footnote{\url{https://www.json.org/json-en.html}} or XML\footnote{\url{https://www.w3.org/XML/}}, followed by the reliable support in Python provided by the library \textit{pyyaml} \cite{yaml}.
@@ -369,13 +374,16 @@ An application record starts with an application name on the top level. The appl
 \end{itemize}
 
 \subsection{Flatpak Applications Setup}\label{flatpak_setup}
+
+This subsection is dedicated to a brief introduction to Flatpak applications. Further, we discuss an effort that has been done to support Flatpak application in our test generator.
+
 Flatpak\footnote{\url{https://flatpak.org/}} is a technology for building and distributing desktop applications on Linux. Flatpak aims to solve the problem with cross-platform distribution of packages on Linux, thus avoiding problems with different package managers used across Linux distributions. Applications, or so-called flatpaks, are delivered to users regardless of the lifecycle of the underlying Linux distribution. The system implements a set of sandboxing technologies, to isolate flatpaks from each other and the system, thus providing security benefits to users~\cite{flatpak}.
 
 The majority of GNOME applications are also available through flatpak. A dedicated flatpak repository \textit{Nightly GNOME Apps} contains the latest development versions of GNOME applications. With Flatpak, those applications are installed alongside their stable versions. This gives us the potential to test the application much sooner before it is released to distributions. This is a benefit behind the integration of flatpak support to this work. The main repository for flatpak applications called Flathub\footnote{\url{https://flathub.org/home}} contains hundreds of applications developed in various frameworks and programming languages. However, the effort done by this work only supports applications developed in GTK3 as they obtain the accessibility support by design.
 
 There are several differences in the runtime perspective between flatpaks and non-flatpak applications. Each application has a unique name, e.g.: \texttt{org.gnome.gedit}. A unique name is required for every operation executable through the \texttt{flatpak} command-line utility. The utility not only serves as a package manager able to install, remove, downgrade and update flatpaks, it also provides a sandbox to run flatpaks. Those differences demand certain changes in the runtime used for the test execution and the test generation. 
 
-Considering the test execution, the approach used in the \textit{qecore's} \texttt{Application} class should be suitable for testing flatpaks. However, the initial testing emphasized the previously mentioned differences and we developed a subclass \texttt{Flatpak}. The \texttt{Flatpak} class inherits the methods from the \texttt{Application} class and reimplements some of them do address those differences. The most important changes are:
+Considering the test execution, the approach used in the \textit{qecore's} \texttt{Application} class should be suitable for testing flatpaks. However, the initial testing emphasized the previously mentioned differences, and therefore we developed the subclass \texttt{Flatpak} that inherits the methods from the \texttt{Application} class and reimplements some of them do address those differences. The most important changes are:
 
 \begin{itemize} 
     \item \texttt{\_\_init\_\_} --the constructor performs a validity check on inserted flatpak ID, the format requires two dots, e.g. \texttt{org.gnome.gedit},
@@ -389,12 +397,14 @@ Considering the test execution, the approach used in the \textit{qecore's} \text
     \item \texttt{is\_running} -- performs a check if a flatpak is running, this is again done with the flatpak command-line utility (e.g. \texttt{flatpak ps <id>}) and the presence of an instance in the accessibility tree
 \end{itemize}
 
-Additionally, the invocation of some of the inherited methods does not make sense for flatpak applications. The invocation of those methods with an instance of the \texttt{Flatpak} class raises an exception. The exception contains a message with an explanation that the methods are not available for Flatpak objects. The developed changes were accepted by the \textit{qecore} project{\footnote{\url{https://gitlab.com/dogtail/qecore/-/blob/master/qecore/flatpak.py}}}.
+Additionally, the invocation of some of the inherited methods does not make sense for flatpak applications. The invocation of those methods with an instance of the \texttt{Flatpak} class raises an exception. The exception contains a message with an explanation that the methods are not available for Flatpak objects. We proposed the developed module \texttt{Flatpak.py} to the \textit{qecore} project, the module was accepted{\footnote{\url{https://gitlab.com/dogtail/qecore/-/blob/master/qecore/flatpak.py}}}.
 
-On the test generator level, a new class \texttt{FlatpakApp} was implemented to manage the runtime of the flatpak applications. As described in the class diagram shown in Figure \ref{test_gen}, the \texttt{FlatpakApp} serves as a wrapper for the \texttt{Flatpak} class in the same manner as the \texttt{App} class wraps the \texttt{Application} class. \texttt{FlatpakApp} and \texttt{App} are customized classes for the test generator, while \texttt{Flatpak} and \texttt{Application} are used during the text execution. 
+As discussed in Section \ref{test_ev_setup}, the \textit{qecore} library is designed to handle the test execution. Additionally, there are other requirements to handle Flatpaks during the test generation. Therefore, we developed the subclass \texttt{FlatpakApp} that works on the test generator level to fullfil those requirements. As described in the class diagram shown in Figure \ref{test_gen}, the \texttt{FlatpakApp} serves as a wrapper for the \texttt{Flatpak} class in the same manner as the \texttt{App} class wraps the \texttt{Application} class. \texttt{FlatpakApp} and \texttt{App} are customized classes for the test generator, while \texttt{Flatpak} and \texttt{Application} are used during the text execution. 
 
 \subsection{Execution and Monitoring of an Application}\label{monitoring}
 
+This subsection discribed how our test generator executes and monitors applications.
+% TODO
 Before the generation process starts, it is necessary to have the implementation for monitoring the state of tested applications and acquire the ability to perform start and stop operations. The test generation process performs various actions available in an application that might change settings or layout of the application. Generation of every test case must start from the same state which should satisfy the following conditions: 
 \begin{enumerate}
     \item an application is not running, if so, force the application to stop;
@@ -418,6 +428,7 @@ The implementation of monitoring for the non-flatpak applications is encapsulate
 \end{figure}
 
 \section{Generating Environment for the Test Execution}
+
 The input of the test generator is provided by the data in \texttt{apps.yaml}. The output is a project structure containing generated test cases and other files required for the test execution. 
 
 Initially, the test generator checks the availability of the entry for a tested application in the configuration file \texttt{apps.yaml}. Subsequently, it creates a sub-folder with the name of the application where generated content will be placed. Predefined source files with the implementation of \textit{steps} (used by \textit{behave} framework) are copied to the folder structure along with scripts and other files that are necessary for the test execution. Figure \ref{project_folder} demonstrates the structure generated for the application \textit{GNOME Terminal}.
@@ -472,6 +483,7 @@ def assert_state(ctx, name, roleName, prop, state):
 The file \texttt{gnome-terminal.log} aggregates log messages produced by a tested application throughout the test generation process. The log file name is derived from the application name defined in the \texttt{apps.yaml} file. The \texttt{mapper.yaml} file contains a list of test cases with other data required for the CI execution. The file \texttt{requirements.py} contains all Python dependencies that need to be installed to execute the test cases. Finally, the \texttt{runtest.sh} is a wrapper script for execution of test cases.
 
 \section{Test Case Generation}
+
 The test generator implementation is encapsulated in the class \texttt{TestGen} (class diagram in Figure \ref{test_gen}). The behavior of the generator can be also influenced by several command-line arguments that will be described later in this work. Based on the parameters (\texttt{flatpak} item in \texttt{apps.yaml}), the instance of either the \texttt{App} or the \texttt{FlatpakApp} is created. 
 
 The generator then creates a copy of the default project structure and injects the files inside the project structure with values that correspond to the application that is going to be tested (Figure \ref{project_folder}). Namely, the files \texttt{environment.py}, \texttt{mapper.yaml}, and \texttt{cleanup.sh} contain placeholders (tags) that are replaced by values defined in \texttt{apps.yaml}. Just note that no Python code is being generated during the process. The default project already contains all the predefined \textit{behave} steps required to execute generated test cases.
