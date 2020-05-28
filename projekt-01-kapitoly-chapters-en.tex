@@ -525,7 +525,7 @@ The next sections are dedicated to the details of the generation algorithm. Algo
         append new sequences for the $window$\;
     }
     }\Else{
-     append new sequences for new nodes\;
+     append new event sequences for the remaining nodes\;
     }
   }
  }
@@ -536,9 +536,9 @@ The next sections are dedicated to the details of the generation algorithm. Algo
 % duplicit node renaming
 \subsection{Derivation of Test Sequences}
 
-The generator proceeds with a first start of a tested application and extracts the AT-SPI tree of the application instance through the \texttt{dogtail}. Then, a writable copy of the tree is created through the \texttt{GTree} instance. The action-less nodes are then removed and the remaining notes are placed in the new instance of the \texttt{TestTree} class. Test cases are derived from the test tree through the class method \texttt{test\_sequences}. 
+The generator begins with a first start of a tested application and extracts the AT-SPI tree of the application instance through the \texttt{dogtail}. Then, a writable copy of the tree is created through the \texttt{GTree} instance. The action-less nodes are then removed and the remaining notes are placed in the new instance of the \texttt{TestTree} class. Test cases are derived from the test tree through the class method \texttt{test\_sequences}. 
 
-The method returns a list\footnote{\url{https://docs.python.org/3/tutorial/datastructures.html}} with test sequences. A test sequence contains a list of nodes with actions that will be executed for every test case. The method gathers the list of leaves in the \texttt{TestTree}. Then it iterates through the list of leaves and calculates path from a leaf to the root of the tree. Each path contains a list of nodes. The result is a list of paths or as mentioned earlier test sequences. A test sequence does not represent a whole test case. The whole test case is created by applying the test sequence on the live instance of the application. While applying the test sequence, the generator appends assertions steps and OCR checks. The checks are generated either before or after the execution of actions and they will be used as a verification in a generated test case to confirm that the application reached the intended state. A test sequence can be used multiple times or it can be extended, if the generator discovers that the applied sequence led to a discovery of new nodes. Those new nodes are evaluated and the generator creates new test sequences, each of those sequences start with a sequence that led to their discovery. 
+The method returns a list\footnote{\url{https://docs.python.org/3/tutorial/datastructures.html}} with test sequences. A test sequence contains a list of nodes with actions that will be executed for every test case. The method gathers the list of leaves in the \texttt{TestTree}. Then it iterates through the list of leaves and calculates the path from a leaf to the root of the tree. Each path contains a list of nodes. The result is a list of paths or as mentioned earlier test sequences. A test sequence does not represent a whole test case. The whole test case is created by applying the test sequence on the live instance of the application. While applying the test sequence, the generator appends assertions steps and OCR checks. The checks are generated either before or after the execution of actions and they will be used as a verification in a generated test case to confirm that the application reached the intended state. A test sequence can be used multiple times or it can be extended, if the generator discovers that the applied sequence led to a discovery of new nodes. Those new nodes are evaluated and the generator creates new test sequences, each of those sequences start with a sequence that led to their discovery. 
 
 \subsection{Execution of Test Sequences}
 The initial phase is completed by the termination of the application instance, the generator continues with the execution of test sequences (line 8 of Algorithm \ref{test_gen_algorithm}). From this point the generator works with 3 instances of the tree: the current running application instance obtained through \textit{dogtail}, the instance of the class \texttt{Gtree}, the instance of the class \texttt{TestTree} or so-called model used to derive the tests.
@@ -559,6 +559,8 @@ If the return code does not contain the value 0, the generator raises the error,
 In some cases, the occurrence of an error does not mean that the application crashes. Therefore, the generator checks the log for known errors after every executed action regardless of the state of the application. The list of the messages that are being checked is stored in the file \texttt{errors.py}. A new error message can be appended to the list at any time. The list currently contains messages that previously occurred in bugs related to \textit{GNOME} applications.
 
 \subsection{Model Expansion}
+This subsection provides a description of the model expansion during the test generation process. The description contains an explanation how our test generator scans an application for new nodes (widgets) as well as creation of test cases for these nodes.
+
 Successful execution of the action, followed by no errors detected in the log and application still being run, indicates that the action could have changed the state of the application. 
 
 Initially, the generator checks whether the action triggered the execution of a new application. The detection is achieved through the symmetrical difference computed on two sets. The first one contains the list nodes representing running applications before the action was executed, the second one holds the list of applications available after the execution. Both lists are shallow copies, so the generator does not need to compare an entire tree for each application. If that is a case, the generator appends the assertion implying that the applied sequence led to the start of a new application. The test generator does not expand the nodes of the newly spawned application to the current test tree as they do not belong to the application that is currently being tested. This solution has limitations, an application that is not exposed to the accessibility bus will not be detected.
@@ -572,7 +574,7 @@ The expansion during the test case generation can significantly increase the exe
 % \subsection{Generating Reports}
 
 \section{OCR Integration}
-In this section we present the integration of OCR in our work. Subsection \ref{OCR_optimizations} is dedicated to the implementation of image preprocessing methods in our test generator. Subsection \ref{OCR_steps} described integration of the OCR in executable test cases.  
+In this section, we present the integration of Tesseract's OCR engine in our work. Subsection \ref{OCR_optimizations} is dedicated to the implementation of image preprocessing methods in our test generator. Subsection \ref{OCR_steps} described integration of the OCR in executable test cases.  
 
 The main goal of the OCR integration in this work is to provide an additional level of verification of string values presented by applications and thus not rely purely on AT-SPI.
 However, the integration of OCR into the generated test cases has to be reliable to avoid false-positive test results. For the reasons mentioned in Section \ref{ocr_conclusion}, the implementation has to contain image preprocessing optimizations and configuration to achieve stable results. Tesseract offers several options that allow to optimize string detection and text analysis. One of them is the definition of the recognized language. It is assumed that most of the tested applications will use the English language and therefore, the dataset trained for the English language is used.
@@ -588,8 +590,6 @@ As discussed in \ref{OCR_section}, Tesseract is less prone to errors when operat
 	\caption{Steps of image preprocessing for the OCR, from the top: the upscaled original image, the binarized image, the inverted binarized image}
 	\label{ocr_conversion}
 \end{figure}
-
-
 
 \begin{lstlisting}[
 caption={Extracted text without optimizations Figure \ref{ocr_conversion}},label={OCR_text1}]
@@ -649,20 +649,22 @@ OCR steps are not added to test cases automatically as our test generator may en
 % An example of the generated test case scenario is available ....
 
 \chapter{Testing and Results}
+In this chapter, we discuss the results of our test generator. Section \ref{coverage} describes the coverage measurement techniques we obtained for test cases created by our test generator.  In Sections \ref{terminal} -- \ref{evince} we present five open-source GUI applications as well as the results that were achieved when we tested them with our test generator. Finally, Section \ref{comparison} contains comparison with other existing tools and test suites.
+
 The result of the generation process is available in a folder structure containing generated test cases, configuration files, and scripts for execution in the CI environment. 
 
-Generated test cases are located in the file named \texttt{generated.feature}. The file contains all the test cases divided into so-called scenarios. Each scenario has a unique name starting with character \texttt{@} that allows single test execution if required. All tests are executable by issuing a command \texttt{behave} in the generated project folder. The tests are also respecting the cleanup commands which are set in \texttt{apps.yaml}. The cleanup is always executed after the finish of the test, regardless of the result of the executed tests. Execution of \texttt{behave} either prints steps from a test scenario to standard output or can generate an HTML log. This log format is more suitable for examination of the results executed in the CI environment accessible through the web interface. 
+Generated \textit{behave} test scenario are located in the file named \texttt{generated.feature}. The file contains all the test cases divided into so-called scenarios. Each scenario has a unique name starting with character \texttt{@} that allows single test execution if required. All tests are executable by issuing a command \texttt{behave} in the generated project folder. The tests are also respecting the cleanup commands which are set in \texttt{apps.yaml}. The cleanup is always executed after the finish of the test, regardless of the result of the executed tests. Execution of \texttt{behave} either prints steps from a test scenario to standard output or can generate an HTML log. This log format is more suitable for examination of the results executed in the CI environment accessible through the web interface. 
 
-Thanks to the setup done by the \textit{qecore} library, the \textit{behave} reports contain embedded logs, videos from the test runs, and a screenshot generated in a moment, when the test case fails. 
+Thanks to the setup done by the \textit{qecore} library, the \textit{behave} reports contain embedded logs, videos from the test runs, and a screenshot generated in a moment, when the test case fails.
 
-The next several sections describe the testing performed on several applications and the evaluation of the achieved results. The section starts with a short description of an application, followed by a result achieved by the proposed test generation tool.  
+\section{Coverage Measurements}\label{coverage}
+This section is dedicated to the coverage measuring techniques that were implemented within our test generator, namely a model coverage and an event coverage. Further, we discuss the code coverage analysis performed with the \verb|gcov| tool.
 
-\section{Model/Event Coverage}
-This section is dedicated to the coverage measuring techniques that were implemented within our test generator, namely a model coverage and an event coverage. 
+\paragraph{Event Coverage.} The event coverage measures the number of executed events on a tested application during the test generation, it is a common technique used in GUI testing~\cite{NguyenBao2014Gait}. An execution of an event is counted as successful one, if the event was executed by the accessibility layer without any errors. The event coverage approach implemented by our test generator also has a disadvantage. The event coverage report contains only events reported by the accessibility technology, other events like drag and drop, keyboard shortcuts and mouse scrolling are not included.
 
-The event coverage measures the number of executed events on a tested application during the test generation, it is a common technique used in GUI testing \cite{NguyenBao2014Gait}. An execution of an event is counted as a successful one if the event was executed by the accessibility layer without any errors. The event coverage approach implemented by our test generator also has a disadvantage. The event coverage report contains only events reported by the accessibility technology, other events like drag and drop, keyboard shortcuts and mouse scrolling are not included.
+\paragraph{Model Coverage.} Another coverage measurement performed by our test generator is the model coverage. The coverage is measured as the number of nodes (widgets) involved in test cases from the overall number of nodes included in the model.
 
-The model coverage is measured as the number of nodes (widgets) involved in test cases from the overall number of nodes included in the model. As discussed in section \ref{model}, the model contains only nodes that offer an action that can be executed by users. It is expected that this coverage will always cover 100 \% of the nodes. However, with applications that contain a richer GUI, some of the nodes might be hidden or the generator will not be able to derive an event sequence that will be able to access those nodes. This especially applies to cases when the generator will be used on a new application that contains some special layout or an action on the given node could not be executed by the accessibility technology. In such cases, our generator skips the whole test case, generates an error message, and proceeds to the next test case. 
+As discussed in Section \ref{model}, the model contains only nodes that offer an action that can be executed by users. It is expected that this coverage will always cover 100 \% of the nodes. However, with applications that contain a richer GUI, some of the nodes might be hidden or the generator will not be able to derive an event sequence that will be able to access those nodes. This especially applies to cases when the generator will be used on a new application that contains some special layout or an action on the given node could not be executed by the accessibility technology. In such cases, our generator skips the whole test case, generates an error message, and proceeds to the next test case. 
 
 Nodes that are not covered by tests, along with test sequences that are involved, are printed in a report after the test generator finishes. The nodes or test sequences reported as failed must be evaluated manually with several possible outcomes:
 
@@ -675,9 +677,7 @@ Nodes that are not covered by tests, along with test sequences that are involved
 
 Both the event coverage and the model coverage are evaluated in the end of the test generation process. The measurements are a part of a final test generator report. The report also contains a list of unexecuted test sequences. The list can be used to retest test cases that were not sucessfully tested by our test generator.
 
-\section{Code Coverage}
-This section is dedicated to the \verb|gcov| tool and the code coverage analysis. The
-\verb|gcov| tool is a standard part of the GNU development tools. The purpose of the tool is to perform the code coverage analysis and to find dead or unexecuted code. Coverage-driven testing can be characterized by the following steps: 
+\paragraph{Code Coverage.} We also obtained code coverage measurements from tests runs generated by our test generator, if possible. The code coverage measurements were obtained with the \verb|gcov| tool that comes as a part of the GNU development tools. The purpose of the tool is to perform the code coverage analysis and to find dead or unexecuted code. Coverage-driven testing can be characterized by the following steps: 
 \begin{enumerate}
   \item Find the areas of a program not exercised by test suite.
   \item Create additional test cases to exercise so far not exercised code, thereby increasing code coverage.
@@ -698,7 +698,7 @@ According to the GTK website\footnote{\url{https://www.gtk.org/}}, the framework
 \section{Test Environment}
 All performed testing was done on virtual machines preloaded with distributions \textit{Red Hat Enterprise Linux 8.2/8.3} and \textit{Fedora 31/32}. The execution of the test generator on production workstations should be avoided as the performed actions may potentially lead to alteration of the system or data loss.  This also applies to the generated test cases. 
 
-\section{GNOME Terminal Tests}
+\section{GNOME Terminal Tests}\label{terminal}
 % code coverage, explanation of achieved coverage
 GNOME Terminal (Figure \ref{terminal-gui}) is one of the most important applications from the GNOME application stack. It is also known as \textit{Terminal} and it serves as a terminal emulator for accessing a UNIX shell environment. The application can be used to run programs available on the system\footnote{\url{https://help.gnome.org/users/gnome-terminal/stable/introduction.html.en}}. 
 
@@ -760,7 +760,7 @@ Generated test cases covered 34.2 \% lines of source code and executed 42 \% of 
 	\label{gnome-terminal-graph2}
 \end{figure}
 
-\section{GNOME Help}
+\section{GNOME Help}\label{}
 GNOME Help (or yelp) is a help viewer for GNOME\footnote{\url{https://wiki.gnome.org/Apps/Yelp}}. The application natively renders documents in various formats including HTML documents. The UI is filled with links to navigate between documents.
 
 \begin{figure}[H]
@@ -872,9 +872,12 @@ The documentation of LibreOffice contains a guide\footnote{\url{https://wiki.doc
 	\label{libreoffice-graph2}
 \end{figure}
 
+\section{Gedit}
+\section{Evince}\label{evince}
+
 %window detection, spawning application withing - changing window
 %bug found
-\section{Comparison with Existing Test Suites}
+\section{Comparison with Existing Test Suites}\label{comparison}
 As discussed in Chapter \ref{proposed_solution}, the approach to application testing done by this work combines several testing techniques and takes advantage of existing testing frameworks and libraries. To the best of my knowledge, there is no tool currently available that tries to achieve the same goal, targeted on applications built for the GNOME environment. The closest related solutions were described in Section \ref{TEMA_TOOLSET}. However, that solution is designed for applications with different development cycles, where a model is being developed before a prototype of the application is available. Other solutions (e.g. references \cite{ReisJacinto2018Aetw},\cite{ArltS2012LSAf}) rely on static analysis and build a model from the source codes of the GUI applications written in Java. The proposed solution derives the model of the SUT from the metadata provided by the accessibility.
 
 When it comes to solutions used for test automation for GNOME applications, several Record-and-Replay tools were described in Section \ref{record_replay}. The proposed solution utilizes \textit{dogtail} combined with the \textit{behave} framework, so the generated test cases are executable even after the generation process is finished.
