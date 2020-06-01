@@ -7,18 +7,14 @@ The majority of today's software applications feature a graphical user interface
 
 The testing of GUI software involves executing events belonging to GUI components and monitoring resulting changes to the program state. GUI test cases consist of event sequences as an input and some indication of a program's state. An indicator can be a GUI state, memory state, error log, output log, or any other indicator of runtime application state. GUI testing represents a form of system-level testing for GUI software. GUI test cases test much more than the code only associated with GUI, as the events execute underlying non-GUI code. In cases where an application has no non-GUI interface, the GUI testing is the only possible form of system-level testing. This makes GUI testing a critical part of testing for any GUI software.
 
-The size and complexity of modern GUIs, in terms of components and events that may be executed on them, exceed the practical limits of exhaustive and analytical approaches to testing. The number of possible test cases for GUI increases exponentially with the number of events per test case.\cite{NguyenBao2014Gait}
+The size and complexity of modern GUIs, in terms of components and events that may be executed on them, exceed the practical limits of exhaustive and analytical approaches to testing. The number of possible test cases for GUI increases exponentially with the number of events per test case \cite{NguyenBao2014Gait}.
 
-The goal of this work is to design and implement a tool for generating tests for GNOME desktop applications using AT-SPI metadata created as a by-product of an architecture supporting assistive technologies.
+In this thesis, we present our solution designed to generate test cases for GUI applications in the GNOME environment. The generator utilizes the metadata provided by the assistive technologies to create a model of the application from which test cases are derived. 
 
-Chapter \ref{chapter_1} is dedicated to methods and practices for testing graphical user interfaces. Further discussion is dedicated to a technique named Model-based testing. The technique is presented with approaches used for automated test generation. 
-
-The next chapter is focused on the architecture of accessibility technology for GTK3 applications, including libraries, tools, and applications for debugging. Further analysis contains a description of accessible objects and their properties. Limitations and encountered problems are discussed with the proposition of additional technologies that should provide an additional level of verification. 
-
-Finally, the proposed solution is being discussed. Starting with the extraction of actions and states from a running application with enabled assistive technology to the process of generation of test case files, which will be prepared to be executed repeatedly. Methods for Code coverage analysis will be discussed as well. 
+\paragraph{Structure of this thesis} Chapter~\ref{chapter_1} describes GUI testing techniques utilized by this work. Chapter~\ref{chapter_2} introduces the reader to the architecture of the accessibility technology (AT-SPI) in the GNOME environment, followed by the description of available tools and libraries. We also discuss the limitations that can occur when the AT-SPI is used for testing as well as the technologies that might be used to cover those limitations, namely the \textit{OpenCV} library and the optical character recognition (OCR) engine \textit{Tesseract}. In chapter~\ref{proposed_solution}, we present the implementation of our test generator. Chapter~\ref{chapter_4} summarises the results we achieved during the testing with our test generator. Finally, chapter~\ref{comparison} contains the evaluation of test coverage and offers the workflow recommendations for our tool.
 
 \chapter{Testing Graphical User Interfaces}\label{chapter_1}
-Graphical user interface (GUI) is an interface that takes advantage of the computer's graphics capabilities to make software easier to use \cite{guidefinition}. Graphical applications are developed using sets of windows and widgets. A widget represents a graphical element describing certain behavior and functionality. User interaction with widgets is generating various events allowing them to perform tasks in different ways while achieving the same goal. Although they improve usability and flexibility, they also represent a challenge for software testing as testers have to decide whether to check all sequences of events or only a subset. The effort required to test the GUIs can be reduced with automated software testing. Even though there was significant progress made in automated testing tools over the last decade, manual testing is still the most common technique in practice. However, with a proper automated GUI testing process, more test cases can be executed regularly and more faults can be found within less time \cite{patternbasedtesting}. Automation and CI-CD system play an essential role in regression testing, especially in the test development phase, when software changes are more frequent. Generally, building GUI test cases involves selecting sequences of GUI events and describing the expected state of the program after event execution \cite{NguyenBao2014Gait}.
+Graphical user interface (GUI) is an interface that takes advantage of the computer's graphics capabilities to make software easier to use \cite{guidefinition}. Graphical applications are developed using sets of windows and widgets. A widget represents a graphical element describing certain behavior and functionality. User interaction with widgets is generating various events allowing them to perform tasks in different ways while achieving the same goal. Although they improve usability and flexibility, they also represent a challenge for software testing as testers have to decide whether to check all sequences of events or only a subset. The effort required to test the GUIs can be reduced with automated software testing. Even though there was significant progress made in automated testing tools over the last decade, manual testing is still the most common technique in practice. However, with a proper automated GUI testing process, more test cases can be executed regularly and more faults can be found within less time \cite{patternbasedtesting}. Automation and CI-CD systems play an essential role in regression testing, especially in the test development phase, when software changes are more frequent. Generally, building GUI test cases involves selecting sequences of GUI events and describing the expected state of the program after event execution \cite{NguyenBao2014Gait}.
 
 Next several sections are dedicated to various testing techniques used to test GUIs. Variations of both manual and automated testing are discussed, followed by examples of tools using them. Throughout the chapter a tested application will be referred to as a system under test (SUT).
 
@@ -435,7 +431,7 @@ The output generated to the standard stream is checked for errors defined in the
 	\label{test_gen}
 \end{figure}
 
-\section{Generating Environment for the Test Execution}\label{generator_output}
+\section{Generating an Environment for the Test Execution}\label{generator_output}
 This section describes an output of our test generator along with description of individual files that are required for execution of generated test cases. The input of the test generator is provided by the application metadata located in \texttt{apps.yaml}. The output is a project structure containing generated test cases and other files required for the test execution. 
 
 Initially, the test generator checks the availability of the entry for a tested application in the configuration file \texttt{apps.yaml}. Subsequently, it creates a sub-folder with the name of the application where generated content will be placed. Predefined source files with the implementation of \textit{steps} (used by \textit{behave} framework) are copied to the folder structure along with scripts and other files that are necessary for the test execution. Figure \ref{project_folder} demonstrates the structure generated for the application \textit{GNOME Terminal}.
@@ -461,7 +457,7 @@ Initially, the test generator checks the availability of the entry for a tested 
 
 The sub-folder named \texttt{features} contains files with the \textit{behave} test cases. Test cases generated by the test generator are in the file \texttt{generated.feature}. The file contains a single so-called \textit{Feature} that contains all generated test cases. Test cases are composed of a tag, a brief description of the test case, and so-called \textit{steps}. The tag is a unique identifier of the test case and thus allows single test case execution, if required. The description should briefly define what should be done with the SUT, when the test case is executed. The steps are one-line statements, each of them describes either an execution of an action or an assertion described in a human-readable language. Successful execution of all steps evaluates the test case as passed. Otherwise, the result of the test case is a fail.
 
-The file \texttt{environment.py} contains the setup required for the test execution. It contains 3 functions used by the \textit{behave} framework to set up or restore the required environment during the test execution. 
+The file \texttt{environment.py} contains the setup required for the test execution (see Appendix \ref{env_example}). It contains 3 functions used by the \textit{behave} framework to set up or restore the required environment during the test execution. 
 
 The \texttt{before\_all} function is run once before the execution of the test cases. It initiates the GNOME environment setup from the \textit{qecore} library and creates an instance of either the \texttt{Flatpak} or the \texttt{Application} class. The type of the application and the parameters for the class instance are extracted from the entry in the configuration file \texttt{apps.yaml}. 
 
@@ -592,13 +588,14 @@ In this subsection, we discuss the implemented optimizations that were required 
 
 As discussed in \ref{OCR_section}, Tesseract is less prone to errors when operating with images containing black text on a white background. Therefore, we used a thresholding method to convert screenshots to binary colors (black and white). However, some applications use darker color themes or contain parts with different color schemes. If we used the thresholding method with such application it would provide us with an opposite result. Therefore, our solution always extracts strings from two images. The first one is a binarized copy of the original image, the second one is a copy of the binarized image with inverted colors. This ensures that the Tesseract's OCR engine has the best possible conditions to obtain the string from the screen. Given that the string is present on the screen, it should be found regardless of a theme set in an application. A demonstration of the image conversions is shown in Figure \ref{ocr_conversion}, containing 3 images, ordered from the top: the original image, the binarized image, and the inverted binarized image. 
 
-\begin{figure}[H]
+\begin{figure}[h]
 	\centering
 	\includegraphics[width=0.9\textwidth,clip]{obrazky-figures/OCR_conversion.png}
-	\caption{Steps of image preprocessing for the OCR, from the top: the upscaled original image, the binarized image, the inverted binarized image}
+	\caption{Steps of image preprocessing for the OCR, from the top: the original image, the binarized image, the inverted binarized image}
 	\label{ocr_conversion}
 \end{figure}
 
+\begin{minipage}{\linewidth}
 \begin{lstlisting}[
 caption={Extracted text without optimizations Figure \ref{ocr_conversion}},label={OCR_text1}]
 s
@@ -610,6 +607,7 @@ test@localhost:
 Edit View Search Terminal Help
 [test@localhost ~1$ Hello world![]
 \end{lstlisting}
+\end{minipage}
 
 Listing \ref{OCR_text1} demonstrates the results obtained from the original image without any uptimizations. The Tesseract's OCR engine manages to extract certain strings from the screen, although the results are not reliable and thus may lead to false-positive reports during the test execution. Further experiments have shown additional issues with text formatting as well as difficulties with recognition of similarly looking letters. An example can be seen on line 8 (see Listing \ref{OCR_text1}), where character \texttt{]} was misinterpreted as character \texttt{1}. These issues were suppressed by upscaling the resolution of the original image to 3,200 x 2,400 pixels.
 
@@ -655,8 +653,8 @@ OCR steps are not added to test cases automatically as our test generator may en
 
 % An example of the generated test case scenario is available ....
 
-\chapter{Testing and Results}
-In this chapter, we discuss the results of our test generator. Section \ref{coverage} describes the coverage measurement techniques we obtained for test cases created by our test generator.  In Sections \ref{terminal} -- \ref{evince} we present five open-source GUI applications as well as the results that were achieved when we tested them with our test generator. Finally, Section \ref{comparison} contains comparison with other existing tools and test suites.
+\chapter{Testing and Results}\label{chapter_4}
+In this chapter, we discuss the results of our test generator. Section \ref{coverage} describes the coverage measurement techniques we obtained for test cases created by our test generator.  In Sections \ref{terminal} -- \ref{gedit} we present five open-source GUI applications as well as the results that were achieved when we tested them with our test generator.
 
 The result of the generation process is available in a folder structure named after a test application and contains generated test cases, configuration files, and scripts for execution in the CI environment. 
 
@@ -667,7 +665,7 @@ Thanks to the setup done by the \textit{qecore} library, the \textit{behave} rep
 All performed testing was done on virtual machines preloaded with distributions \textit{Red Hat Enterprise Linux 8.2/8.3}. Virtual machines were assigned  The execution of the test generator on production workstations should be avoided as the performed actions may potentially lead to alteration of the system or data loss.  This also applies to the generated test cases. 
 
 
-\section{Coverage Measurements}\label{coverage}
+\section{Coverage Evaluation}\label{coverage}
 This section is dedicated to the coverage measuring techniques that were implemented within our test generator, namely a model coverage and an event coverage. Further, we discuss the code coverage analysis performed with the \verb|gcov| tool.
 
 \paragraph{Event Coverage} The event coverage measures the number of executed events on a tested application during the test generation, it is a common technique used in GUI testing~\cite{NguyenBao2014Gait}. An execution of an event is counted as successful one, if the event was executed by the accessibility layer without any errors. The event coverage approach implemented by our test generator also has a disadvantage. The event coverage report contains only events reported by the accessibility technology, other events like drag and drop, keyboard shortcuts and mouse scrolling are not included.
@@ -706,7 +704,7 @@ To obtain measurements, tests must be executed with a custom binary, compiled wi
 According to the GTK website\footnote{\url{https://www.gtk.org/}}, the framework supports JavaScript, Python, Rust, Vala, C, and Perl. The \verb|gcov| method of measuring the test coverage is only possible for C and Vala.    
 %test coverage, node coverage, action coverage
 
-\section{GNOME Terminal Tests}\label{terminal}
+\section{GNOME Terminal}\label{terminal}
 % code coverage, explanation of achieved coverage
 GNOME Terminal (Figure \ref{terminal-gui}) is one of the most important applications from the GNOME application stack. It is also known as \textit{Terminal} and it serves as a terminal emulator for accessing a UNIX shell environment. The application can be used to run programs available on the system\footnote{\url{https://help.gnome.org/users/gnome-terminal/stable/introduction.html.en}}. 
 
@@ -718,7 +716,7 @@ GNOME Terminal (Figure \ref{terminal-gui}) is one of the most important applicat
 	\label{terminal-gui}
 \end{figure}
 
-\subsection{Setup and Cleanup}
+\subsection*{Setup and Cleanup}
 A large part of test cases generated for GNOME Terminal performs some changes of settings either via the \textit{Preferences} dialog or through menus located at the top of the window. Preferences can change various aspects of the application, including the text encoding, layout of widgets, and color schemes. Those changes need to be set back to default values to make sure that test cases will not affect subsequent test cases. In \textit{Terminal}, this is achieved through 2 cleanup commands (Listing \ref{gnome-terminal-cleanup}) that are executed at the end of every test case. Testing was performed with the rpm package \texttt{gnome-terminal-3.28.3-1.el8.x86\_64}, Red Hat Enterprise Linux 8.3 (RHEL 8.3).
 
 \begin{lstlisting}[caption={The cleanup commands required to reset GNOME Terminal to the default settings},label={gnome-terminal-cleanup}]
@@ -726,7 +724,7 @@ A large part of test cases generated for GNOME Terminal performs some changes of
     dconf reset -f /org/gnome/terminal/legacy/
 \end{lstlisting}
 
-\subsection{Test Generation and Results}
+\subsection*{Test Generation and Results}
 Listing \ref{gnome-terminal-report} contains the final test generator report and summarizes the testing performed on \textit{Terminal}. The developed test generator was able to generate 485 test cases while covering 1,700 events in the application. Tests are covering menus, several smaller dialogs, and a \textit{Preferences} window.
 
 \begin{lstlisting}[caption={Final test generator report for GNOME Terminal},label={gnome-terminal-report}]
@@ -777,7 +775,7 @@ GNOME Help (or yelp) is a help viewer for GNOME\footnote{\url{https://wiki.gnome
 	\label{yelp_ui}
 \end{figure}
 
-\subsection{Test Generation and Results}\label{firefox_bug}
+\subsection*{Test Generation and Results}\label{firefox_bug}
 Listing \ref{yelp-report} contains the final report and summarizes the testing performed on \textit{GNOME Help}. The developed test generator was able to generate 2,415 test cases while covering the 4,690 events in the application. The application did not require any individual setup, the testing was performed with the rpm package \texttt{yelp-3.28.1-3.el8.x86\_64}.
 
 \begin{lstlisting}[caption={
@@ -827,10 +825,10 @@ LibreOffice StartCenter (\ref{libreoffice-gui}) is a document management applica
 \end{figure}
 
 
-\subsection{Required Implementation Changes and Limitations}
-Several complications required application-specific changes to be added in the implementation of the test generator. 
+\subsection*{Required Implementation Changes and Limitations}
+During the testing of LibreOffice StartCenter we encountered issues with LibreOffice Calc which forced us to implement application-specific changes to our test generator. 
 
-Tests are executing all applications from the LibreOffice Suite. LibreOffice Calc is a spreadsheet editor that contains theoretically an infinite number of cells that could be edited. Therefore, the application cannot be recursively explored for new nodes. A recursive search causes that the application will generate new cells until the RAM on a virtual machine is depleted. The virtual machine is unresponsive and refuses to execute commands through a remote shell. Therefore, the implementation of the test generator was altered to avoid the execution of a recursive search on LibreOffice Calc.
+Tests generated for LibreOffice StartCenter are executing all applications from the LibreOffice suite. LibreOffice Calc is a spreadsheet editor that contains theoretically an infinite number of editable cells that are created on demand. Therefore, the application cannot be recursively explored for new nodes. A recursive search causes that the application will generate new cells until the RAM on a virtual machine is depleted. The virtual machine is unresponsive and even refuses to execute commands through a remote shell. Therefore, the implementation of the test generator was altered to avoid the execution of a recursive search on LibreOffice Calc.
 
 Another accessibility-related issue has started to occur when the test generation process reached certain types of dialogs (letter wizard, fax wizard, etc.). The behavior was quite similar to the previous issue, the test generator hanged on a recursive search query for a while and then failed with the error message shown in Listing \ref{error-message}.
 
@@ -840,8 +838,8 @@ Failed to handle new nodes atspi_error:The application no longer exists (0)
 
  The investigation has shown the application spawns 2 windows, the first one is the previously mentioned dialog, the second one is a generic LibreOffice window that contains only a blank window with menus. The blank window is probably spawned because those wizard dialogs are not standalone applications, they belong to other applications from the LibreOffice suite. This claim is supported by the fact that the blank window only lasts as long as the dialog is opened. The blank window contains widgets but they are not available for interaction as the focus is only available for the dialog window in the front. Therefore, the blank window is an issue from the implementation perspective of the generator as it tries to perform node expansion on a window that never becomes available. Since the accessibility system throws the mentioned error, it is handled as an exception and the generator continues without expansion of the affected part of the application.
 
-\subsection{Testing and Results}\label{libreoffice-test}
-Testing LibreOffice required some setup in the \texttt{apps.yaml} file. The application instance has to be started with the \texttt{-{}-norestore} parameter to avoid the restoration of unsaved documents from previous sessions. The user configurations files located in \texttt{\textasciitilde/.config/libreoffice/} are removed during the cleanup process. After the previously discussed implementation changes, the generator has been able to perform a full run on the application and produces a test report that is partially shown in Listing \ref{libreoffice-report}.
+\subsection*{Testing and Results}\label{libreoffice-test}
+Testing LibreOffice required some setup in the \texttt{apps.yaml} file. The application instance has to be started with the \texttt{-{}-norestore} parameter to avoid the restoration of unsaved documents from previous sessions. The user configurations files located in \texttt{\textasciitilde/.config/libreoffice/} are removed during the cleanup process. After the previously discussed implementation changes, the generator has been able to perform a full run on the application and produces a test report that is partially shown in Listing \ref{libreoffice-report}. A subset of tests generated for LibreOffice Calc is shown in Appendix \ref{tests_example}.
 
 \begin{lstlisting}[caption={Final test generator report for LibreOffice StartCenter},label={libreoffice-report}]
     Test Generator Report for Component: LibreOffice StartCenter
@@ -884,11 +882,11 @@ This section introduces us to a document viewer application Evince\footnote{\url
 	\centering
 	\includegraphics[width=0.85\textwidth,clip]{obrazky-figures/evince.png}
 	\caption{Evince document viewer GUI}
-	\label{evince}
+	\label{evince_gui}
 \end{figure}
 
-\subsection{Testing and Results}
-Initially, we tested a blank Evince instance without a test file. However, results have shown that a lot of widgets are not available, or disabled. Therefore, we decided to add a test file in a \texttt{.pdf} format as shown in Figure \ref{evince}. A name and a path of the test file is configurable via the \texttt{apps.yaml} file. The test file is used during the test case generation process as well as the test case execution process. An inclusion of the test file have unlocked the majority of disabled widgets and allowed us to use the full potential of our test generator. 
+\subsection*{Testing and Results}
+Initially, we tested a blank Evince instance without a test file. However, results have shown that a lot of widgets are not available, or disabled. Therefore, we decided to add a test file in a \texttt{.pdf} format as shown in Figure~\ref{evince_gui}. A name and a path of the test file is configurable via the \texttt{apps.yaml} file. The test file is used during the test case generation process as well as the test case execution process. An inclusion of the test file have unlocked the majority of disabled widgets and allowed us to use the full potential of our test generator. 
 
 \begin{lstlisting}[caption={Final test generator report for LibreOffice StartCenter},label={evince-report}]
 Test Generator Report for Component: Document Viewer
@@ -900,9 +898,9 @@ Nodes without the Coverage:
 Generation Time: 11:48:49.071478s
 \end{lstlisting}
 
-Listing \ref{evince-report} contains the final test generator report. The report section that starts on line 5 contains a list of enexecuted event sequences. The manual reproduction of sequences has shown that the reported event sequences lead to widgets that were not available for an interaction. In two cases, our test generator crashed the application by executing an action on an unavailable widget through the accessibility layer. This is the same issue that we encountered when we tested LibreOffice StartCenter (see Subsection \ref{libreoffice-test}).
+Listing~\ref{evince-report} contains the final test generator report. The report section that starts on line 5 contains a list of enexecuted event sequences. The manual reproduction of sequences has shown that the reported event sequences lead to widgets that were not available for an interaction. In two cases, our test generator crashed the application by executing an action on an unavailable widget through the accessibility layer. This is the same issue that we encountered when we tested LibreOffice StartCenter (see Subsection~\ref{libreoffice-test}).
 
-Our test generator revealed an unknown issue with the \texttt{Gtk-CRITICAL} error message. We were able to report the issue from the reproducer provided by our test generator and we created a bug report\footnote{\url{https://bugzilla.redhat.com/show_bug.cgi?id=1842017}}. The issue occured in a test case when a document is opened in the \textit{Presentation Mode}. The error message is not that severe, however this kind of messages are printed when something critical fails within the application and there are numerous bug reports for the GNOME applications for similar issues. Furthermore, the issues like the one we reported are harder to find, because they occur only we check the \textit{stderr} of a GUI application.
+Our test generator revealed an unknown issue with the \texttt{Gtk-CRITICAL} error message. We were able to report the issue from the reproducer provided by our test generator (see Appendix~\ref{bug}) and we created a bug report\footnote{\url{https://bugzilla.redhat.com/show_bug.cgi?id=1842017}}. The issue occured in a test case when a document is opened in the \textit{Presentation Mode}. The error message is not that severe, however this kind of messages are printed when something critical fails within the application and there are numerous bug reports for the GNOME applications for similar issues. Furthermore, the issues like the one we reported are harder to find, because they occur only we check the \textit{stderr} of a GUI application.
 
 The Since the \textit{RHEL 8.3} distribution contains an older version of the application we tested (\texttt{gedit-3.28.1-3.el8.x86\_64}), we also decided to test a much newer flatpak version of the application (\texttt{org.gnome.Evince, Version:3.36.1}). We repeated the testing on the flatpak, however the issue was not confirmed in the newest version. 
 
@@ -921,7 +919,7 @@ The Since the \textit{RHEL 8.3} distribution contains an older version of the ap
 \end{figure}
 
 
-\section{Gedit}
+\section{Gedit}\label{gedit}
 This section presents the result achieved with our test generator when testing Gedit application \ref{gedit-ui}, which is a text editor of the GNOME desktop environment\footnote{\url{https://wiki.gnome.org/Apps/Gedit}}. 
 
 \begin{figure}[H]
@@ -931,7 +929,7 @@ This section presents the result achieved with our test generator when testing G
 	\label{gedit-ui}
 \end{figure}
 
-\subsection{Testing and Results}
+\subsection*{Testing and Results}
 After the issues we experienced with testing \textit{Evince} without a test file, we included one for \textit{gedit} tests from the beginning. The achieved results are summarized in the final test generator report shown in Listing \ref{gedit-report}. The report contains a lot of unexecuted event sequences that are not displayed in the listing. The issues were quite similar to issues that occured with applications we tested before. Our generator failed to derive an event sequence for a group of widgets in a \textit{Print} dialog and a \textit{Preferences} dialog.
 
 \begin{lstlisting}[caption={Final test generator report for Gedit},label={gedit-report}]
@@ -1009,7 +1007,7 @@ The test generator itself is a piece of software as well. It is designed to work
 
 \section{Recommended Usage and Future Work}\label{future_work}
 In Chapter \ref{proposed_solution}, we introduced a recommended workflow with our test generator (Figure \ref{Diagram}). The workflow contains a review of generated test cases that could be in some cases as time consuming as manual testing. When we tested LibreOffice StartCenter or GNOME Help, the amount of time required for test generation went up to 12 hours. 
-
+% spomen assertion
 Therefore, we introduced the command-line option \texttt{-{}-shallow} that prevents the test generator from the expansion of newly discovered nodes. The option provides the ability to obtain the most essential test automation for an application in a reasonable time (up to 10 minutes), and with the reasonable amount of test cases (up to 100). This so-called \textit{shallow} automation could be quickly reviewed and pushed to a CI environment to perform regression testing when a new version of an application is built. Then, a non-shallow run can be performed to let our generator go through all extracted scenarios and report reproducers for potential issues.
 
 Furthermore, another option could be implemented to restrict the depth of executed event sequences. However, the option can lead to generation of unreasonable test cases, e.g. opening a menu without clicking on menu items, triggering a dialog without clicking a button, etc.
@@ -1017,4 +1015,11 @@ Furthermore, another option could be implemented to restrict the depth of execut
 Lastly, we could narrow an amount of generated test cases by definition of a window, a dialog, or a menu we want to test. The implementation of this feature would require us to handle an additional input, specifically a \textit{name} and a \textit{roleName} of a widget as well as an event sequence that is required to navigate to the widget.
 
 \chapter{Conclusion}
-Tests for LibreOffice StartCenter were pushed to the Desktop CI environment in RedHat. A couple of test runs were performed to verify the sanity of the tests in tthe given environment.
+
+In this thesis, we presented our test generator for GNOME GUI applications. The generator utilizes the metadata of accessibility technologies to create an abstract model of an application. The model is then used for identification of event sequences that are executed on a tested application. The extracted event sequences are applied on a live instance of the tested application. The state of the application is monitored for severe issues that could appear during the interaction with the application. Additionally, the generator can discover widgets that appear during the testing and include them to the model. The generator also creates additional assertions based on metadata from the accessibility layer as well as assertions that are performed by the OCR engine \textit{Tesseract}. The event sequences along with assertions are put together in a set of executable test cases written in a \textit{behave} framework. The generated test cases are suitable for regression testing performed by the CI pipeline.  
+
+Futhermore, we used our solution to test 5 GNOME GUI applications. The testing performed with our test generator has proven the ability to identify unknown bugs in multiple applications which were reported to developers. We also performed test runs with a selected group of generated tests (\textit{shallow} tests) in the \textit{Desktop-CI} environment in RedHat.
+
+We have also discussed the limitations caused by the accessibility layer that we encountered during the testing. These limitations partially changed our approach to keep the implementation as general as possible and forced us to integrate some application-specific changes in our solution.
+
+A plan for future work includes the integration of new parameters that would allow us to test only a selected part of the application. The evaluation of code coverage results achieved by our test generator has shown, that we can possibly increase the level of the code coverage by including more test files supported by applications. Therefore, we might implement a mechanism that will exchange multiple files during the test generation.  
