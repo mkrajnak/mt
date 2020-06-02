@@ -30,7 +30,7 @@ Testing with our test generator requires the following setup:
 \begin{enumerate}
     \item Open a terminal,
     \item Copy the contents of the attached medium or clone a git repository by executing \\ {\texttt{\$ git clone https://github.com/mkrajnak/testextractor}}
-    \item Based on the underlying Linux distrubtion (\textit{Fedora} or \textit{RHEL}), install the dependencies located in the \textit{install} folder: \\ \texttt{\$ cd install \&\& sudo dnf -y install ./*.rpm}
+    \item Based on the underlying Linux distribution (\textit{Fedora} or \textit{RHEL}), install the dependencies located in the \textit{install} folder: \\ \texttt{\$ cd install \&\& sudo dnf -y install ./*.rpm}
     \item Enable the AT-SPI: \\ 
     \texttt{\$ gsettings set org.gnome.desktop.interface toolkit-accessibility true}
     \item Setup Tesseract (requires external software repositories): \\
@@ -261,6 +261,7 @@ def after_scenario(ctx, scenario):
 .2 examples -- examples of generated test cases for tested components.
 .2 install -- required dependencies.
 .2 testextractor -- source files of our test generator.
+.2 text -- sources of this thesis.
 .2 xkrajn02.pdf -- final version of this thesis.
 } 
 

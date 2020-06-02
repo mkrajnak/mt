@@ -3,18 +3,20 @@
 % Authors: Michal Bidlo, Bohuslav Křena, Jaroslav Dytrych, Petr Veigend and Adam Herout 2019
 
 \chapter{Introduction}
-The majority of today's software applications feature a graphical user interface (GUI). The term GUI application or GUI software is used for an application that uses GUI as a primary interface for interaction, also called reactive systems. The visible GUI structures are made from the components. These components accept sequences of user events that alter the state of the software. The modification of state may or may not include a change to the visible GUI itself. 
+Nowadays, the majority of software applications feature a graphical user interface (GUI). The interface takes advantage of the computers' graphics capabilities to make software easier to use \cite{guidefinition}. Graphical applications are developed using sets of windows and widgets. A widget represents a graphical element describing certain behavior and functionality. User interaction with widgets is generating various events allowing them to perform tasks in different ways while achieving the same goal. 
 
-The testing of GUI software involves executing events belonging to GUI components and monitoring resulting changes to the program state. GUI test cases consist of event sequences as an input and some indication of a program's state. An indicator can be a GUI state, memory state, error log, output log, or any other indicator of runtime application state. GUI testing represents a form of system-level testing for GUI software. The GUI test cases test much more than the code associated only with GUI, as the events execute underlying non-GUI code. In cases where an application has no non-GUI interface, the GUI testing is the only possible form of system-level testing. This makes GUI testing a critical part of testing for any GUI software.
+Despite the fact that GUIs improve usability and flexibility, they also represent a challenge for software testing as testers have to decide whether to check all sequences of events or only a subset. The effort required to test the GUIs can be reduced with automated software testing. Even though there was significant progress made in automated testing tools over the last decade, manual testing is still the most common technique in practice. However, with a proper automated GUI testing process, more test cases can be executed regularly and more faults can be found within less time \cite{patternbasedtesting}. Automation and CI-CD systems play an essential role in regression testing, especially in the test development phase, when software changes are more frequent. Generally, building GUI test cases involves selecting sequences of events and describing the expected state of the program after event execution. An indicator of expected state can be a state of GUI, memory state, error log, output log, etc. 
 
-The size and complexity of modern GUIs, in terms of components and events that may be executed on them, exceed the practical limits of exhaustive and analytical approaches to testing. The number of possible test cases for GUI increases exponentially with the number of events per test case \cite{NguyenBao2014Gait}.
+The test cases designed for GUIs test much more than the code associated only with GUI, as the events also execute underlying non-GUI code. In cases where an application has only a GUI interface, the GUI testing is the only possible form of testing. The size and complexity of modern GUIs, in terms of components and events that may be executed on them, exceed the practical limits of analytical approaches to testing. The number of possible test cases for GUI increases exponentially with the number of events and components in GUI~\cite{NguyenBao2014Gait}.
 
-In this thesis, we present our solution designed to generate test cases for GUI applications in the GNOME environment. The generator utilizes the metadata provided by the assistive technologies to create a model of the application from which test cases are derived. 
+In this thesis, we present our solution designed to generate test cases for GUI applications in the GNOME environment. The implemented generator utilizes the metadata provided by the assistive technologies to create a model of a GUI application from which test cases are derived. Further, we discuss the results achieved by testing applications with the implemented tool, the limitations discovered during the development, and the plans for future work as well.
 
-\paragraph{Structure of this thesis} Chapter~\ref{chapter_1} describes GUI testing techniques utilized by this work. Chapter~\ref{chapter_2} introduces the reader to the architecture of the accessibility technology (AT-SPI) in the GNOME environment, followed by the description of available tools and libraries. We also discuss the limitations that can occur when the AT-SPI is used for testing as well as the technologies that might be used to cover those limitations, namely the \textit{OpenCV} library and the optical character recognition (OCR) engine \textit{Tesseract}. In chapter~\ref{proposed_solution}, we present the implementation of our test generator. Chapter~\ref{chapter_4} summarises the results we achieved during the testing with our test generator. Finally, chapter~\ref{comparison} contains the evaluation of test coverage and offers the workflow recommendations for our tool.
+% The generator performs an exploratory testing of an application and generates test cases suitable for automated testing. During the testing, the generator can detect certain errors in a tested application.
+
+Structure of this thesis continues as follows. Chapter~\ref{chapter_1} describes GUI testing techniques utilized by this work. Chapter~\ref{chapter_2} introduces the reader to the architecture of the accessibility technology (AT-SPI) in the GNOME environment, followed by the description of available tools and libraries. We also discuss the limitations that can occur when the AT-SPI is used for testing as well as the technologies that might be used to cover those limitations, namely the \textit{OpenCV} library and the optical character recognition (OCR) engine \textit{Tesseract}. In chapter~\ref{proposed_solution}, we present the implementation of our test generator. Chapter~\ref{chapter_4} summarises the results we achieved during the testing with our test generator. Chapter~\ref{comparison} contains the evaluation of test coverage and offers the workflow recommendations for our tool. Chapter~\ref{conclusion} concludes this thesis.
 
 \chapter{Testing Graphical User Interfaces}\label{chapter_1}
-Graphical user interface (GUI) is an interface that takes advantage of the computer's graphics capabilities to make software easier to use \cite{guidefinition}. Graphical applications are developed using sets of windows and widgets. A widget represents a graphical element describing certain behavior and functionality. User interaction with widgets is generating various events allowing them to perform tasks in different ways while achieving the same goal. Although they improve usability and flexibility, they also represent a challenge for software testing as testers have to decide whether to check all sequences of events or only a subset. The effort required to test the GUIs can be reduced with automated software testing. Even though there was significant progress made in automated testing tools over the last decade, manual testing is still the most common technique in practice. However, with a proper automated GUI testing process, more test cases can be executed regularly and more faults can be found within less time \cite{patternbasedtesting}. Automation and CI-CD systems play an essential role in regression testing, especially in the test development phase, when software changes are more frequent. Generally, building GUI test cases involves selecting sequences of GUI events and describing the expected state of the program after event execution \cite{NguyenBao2014Gait}.
+
 
 Next several sections are dedicated to various testing techniques used to test GUIs. Variations of both manual and automated testing are discussed, followed by examples of tools using them. Throughout the chapter a tested application will be referred to as a system under test (SUT).
 
@@ -166,18 +168,18 @@ The module \texttt{tree} contains the most important class \texttt{Node}, instan
 
 The module \texttt{dump} contains only one method with the same name. The method returns a string describing the tree of nodes which is useful for python/ipython console debugging.
 
-Finally, the module \texttt{rawinput} contains the implementation required for generating events from both keyboard and mouse. More complex events simulating keyboard shortcuts, mouse gestures, and drag and drop operations are implemented as well.
+Finally, the module \texttt{rawinput} contains the implementation required for generating events from both a keyboard and a mouse. More complex events simulating keyboard shortcuts, mouse gestures, and drag and drop operations are implemented as well.
 
-Testing Dogtail has proven availability for many Linux distributions through their package repositories, specifically Fedora 32, Red Hat Enterprise Linux 8.2 and Manjaro 18 with GNOME 3.34 (Archlinux). It is also available as a \textit{Pypi} Python package and according to information in it's official Gitlab repository, it should work not only for GTK3 applications but also for applications written in QT and KDE. 
- 
-Dogtail testing reveals some minor problems which might occur during test development. There are known cases in which the coordinates of a node were not reported correctly. Most of the elements with the \texttt{roleName} value \textit{panel} and \textit{list box} are missing their \textit{name} values. Elements without the \texttt{name} value are much harder to identify, although they might not be important for users, as they do not contain any visible text, nor do they offer a way of interaction. The purpose of those elements is to serve as a wrapper that groups other elements together in a tree. 
+Testing dogtail has proven its availability for many Linux distributions through their package repositories, specifically Fedora 32, Red Hat Enterprise Linux 8.2 and Manjaro 18 with GNOME 3.34 (Archlinux). It is also available as a \textit{Pypi} Python package and according to information in it's official Gitlab repository, it should work not only for GTK3 applications but also for applications written in QT and KDE. 
+
+During the testing of dogtail, we revealed some minor problems which might occur with test development. There are known cases in which the coordinates of a node were not reported correctly. Most of the elements with the \texttt{roleName} value \textit{panel} and \textit{list box} are missing their \texttt{name} values. Elements without the \texttt{name} value are much harder to identify, although they might not be important for users, as they do not contain any visible text, nor do they offer a way of interaction. The purpose of those elements is to serve as a wrapper that groups other elements together in a tree. 
 
 However, there are elements that are available for user interaction but they are not named (e.g. a refresh button in the Disk User Analyzer application\footnote{\url{https://wiki.gnome.org/Apps/DiskUsageAnalyzer}}). 
 Once an action needs to be dispatched on such an element, the identification has to be done either through a parent element or a sibling element. Additionally, the execution of a mouse event will require an offset calculation to specify the correct element position on the screen.
 
-Another discovered issue is a non-accessible menu which is included in the majority of the GNOME applications. This issue is quite severe, therefore it was reported reported\footnote{\url{https://bugzilla.redhat.com/1723836}} and resolved by developers. 
+Another discovered issue is a non-accessible menu which is included in the majority of the GNOME applications. This issue is quite severe, therefore it was reported\footnote{\url{https://bugzilla.redhat.com/1723836}} and resolved by developers. 
  
- So to conclude this subsection, dogtail is a powerful tool for the development of automated test cases in the GNOME3 environment. On the other hand, it contains discussed limitations and flaws. Those limitations need not come from dogtail itself, they are either accessibility bugs or bugs in the GTK3 framework (non-accessible menu).  
+ So to conclude this subsection, dogtail is a powerful tool for the development of automated test cases in the GNOME3 environment. On the other hand, it contains discussed limitations and flaws. Those limitations do not need to come from dogtail itself, they are either accessibility bugs or bugs in the GTK3 framework (non-accessible menu).  
 
 \subsection{Accerciser}
 Accerciser is an interactive accessibility explorer developed in Python. It provides a well-arranged graphical frontend for the AT-SPI library, hence it can inspect, examine and interact with widgets. It also serves as a verification tool for developers, to check that their applications are providing correct information to assistive technologies and automated testing frameworks. Compared to Sniff, Accerciser's interface (Figure \ref{Accerciser_img}) offers extended features and functions. The default interface has three sections, a~tree view with the entire hierarchy of accessible objects and two optional plugin areas. The~Accerciser has an extensible, plugin-based architecture. Most of the features available by default are provided by plugins discussed in the next several paragraphs.
@@ -219,11 +221,11 @@ As discussed in the aforementioned sections, the information provided by the AT-
 
 \subsection{OpenCV and Image Matching Techniques}
 OpenCV or Open Source Computer Vision Library is a software library that provides optimized algorithms for computer vision and machine learning. According to the official OpenCV webpage \cite{opencv}, the library contains more than 2,500 algorithms and it is being developed 
-by a vast community of contributors around the world. The library is used extensively by government institutions, research groups, and companies including Microsoft, Google, IBM, etc. One of the biggest advantages is its native C++ implementation with bindings making the library available in Python, Java, and Matlab, and the fact that supports Linux, Android, Mac OSX, and Windows. Similarly to dogtail, OpenCV can be installed easily via the python3 package manager (\texttt{pip}), regardless of the Linux distribution. 
+by a vast community of contributors around the world. The library is used extensively by government institutions, research groups, and companies including Microsoft, Google, IBM, etc. One of the biggest advantages is its native C++ implementation with bindings making the library available in Python, Java, and Matlab, and the fact that supports Linux, Android, Mac OSX, and Windows. Similarly to dogtail, OpenCV can be installed easily via the Python3 package manager (\texttt{pip}), regardless of the Linux distribution. 
 
-OpenCV offers many algorithms, including image recognition that can be used to either locate or verify the presence of an element on the screen. This approach would require to have a set of images containing elements prepared in advance, then it can be used to find the image location on the screenshot of the screen taken during a test run. Compared to verification of the node via the AT-SPI only, this approach would also verify that the element is properly rendered on the screen. An additional benefit is a possibility of verification of text formatting and colors. On the contrary, this process requires additional manual work where one would need to capture images, label them, and associate them with certain test scenarios. The number of elements displayed on the screen multiple times creates another parameter that would require manual maintenance. The most common example of such cases are buttons labeled either OK or Cancel as they are used in many applications.
+OpenCV offers many algorithms, including image recognition that can be used to either locate or verify the presence of an element on the screen. This approach would require to have a set of images containing elements prepared in advance, then it can be used to find the image location on the screenshot taken during a test run. Compared to verification of the node via the AT-SPI only, this approach would also verify that the element is properly rendered on the screen. An additional benefit is a possibility of verification of text formatting and colors. On the contrary, this process requires additional manual work where one would need to capture images, label them, and associate them with certain test scenarios. The number of elements displayed on the screen multiple times creates another parameter that would require manual maintenance. The most common example of such cases are buttons labeled either \textit{OK} or \textit{Cancel} as they are used in many applications.
 
-Another possible approach is to use the shape recognition algorithm which can locate shapes like circles, rectangles, and many other common shapes. From the development perspective this would be easier to maintain, as there is no requirement for images prepared in advance. Frequent application changes during software development may also cause that tests based on image matching can be easily outdated. This factor forces testers to revisit test suites, therefore the efficiency of automated tests deteriorates. It can also help with the widget location in cases where accessibility is reporting wrong coordinates. On the other hand, locating the right widget in cases when several similarly shaped ones are located on the screen at the same time will yield very inconsistent results.
+Another possible approach is to use the shape recognition algorithm which can locate shapes like circles, rectangles, and many other common shapes. From the development perspective this would be easier to maintain, as there is no requirement for images prepared in advance. Frequent application changes during the software development may also cause that tests based on image matching can be easily outdated. This factor forces testers to revisit test suites, therefore the efficiency of automated tests deteriorates. It can also help with the widget location in cases where accessibility is reporting wrong coordinates. On the other hand, locating the right widget in cases when several similarly shaped ones are located on the screen at the same time will yield very inconsistent results.
 
 \subsection{Optical Character Recognition}\label{OCR_section}
 The Optical Character Recognition (OCR) is a method of extracting text from images. One of the available open-source tools is a tool called Tesseract.
@@ -245,7 +247,7 @@ The Tesseract's API for Python3 is bundled in a module named \texttt{pytesseract
     \item top -- integer value, specifies the number of pixels from the top of the image,
     \item width -- integer value, specifies the width of the recognized string, 
     \item height -- integer value, specifies the height of the recognized string,
-    \item the rest are less important values for this work: \verb|level, page_num, block_num| \\ \verb|par_num, line_num, word_num, conf|,
+    \item the rest are less important values for this work: \verb|level, page_num, block_num| \\ \verb|par_num, line_num, word_num, conf|.
 \end{itemize}
 
 \begin{figure}[H]
@@ -260,14 +262,12 @@ Figure \ref{ocr_nautilus} contains a demonstration of the Tesseract engine capab
 The demonstration has proven that the Tesseract's OCR engine can be used as an alternative tool for location or verification of widgets that contain text. This method also verifies that the text content was properly rendered and is readable for the user. OCR systems have limitations and work with a certain margin of error which is a fact that also applies to Tesseract. Various applications can use different color schemes including background colors and font colors, input fields, and labels. Highlighting elements to perform actions on them can also lead to changes in color conditions. Image preprocessing methods provided by OpenCV can aid in avoiding problems associated with those cases, namely color inversion and binarisation. Those methods would supply the Tesseract's engine with an image containing black text and a white background for the evaluation.
 
 \section{Conclusion}\label{ocr_conclusion}
-This chapter has been dedicated to the Accessibility technologies in the GNOME desktop with a deeper look at implementation, libraries, and tools for debugging. Furthermore, technologies that may be able to cover limitations and bugs in accessibility have been evaluated as well. Both OpenCV and Tesseract may help with identification, location, and verification of non-accessible elements in applications. A possible disadvantage is a delay caused by taking and processing screenshots of applications that have to be taken at the right time. The OpenCV's image matching algorithm can reliably locate prearranged images of icons, labels, or whole application windows on the screen. Considering a stable application environment with a black text on a white background in most applications, Tesseract can detect and reliably locate most of the text content on the screen. Other cases can be covered by image preprocessing done again in OpenCV. Both technologies are working with the actual application content rendered to users, possibly bringing an additional level of verification. However, the goal of this work is to generate test cases dynamically and preparation of a set of screenshots to verify a proper rendering of icons would violate this effort. A possible solution could be to take screenshots during the test generation process. However, an icon would need to be cropped out from the screenshot, thus relying on the position of the icon reported by the AT-SPI. Therefore, an integration of the Tesseract's OCR is more beneficial for this project.
+This chapter has been dedicated to the accessibility technologies in the GNOME desktop with a deeper look at implementation, libraries, and tools for debugging. Furthermore, technologies that may be able to cover limitations and bugs in accessibility have been evaluated as well. Both OpenCV and Tesseract may help with identification, location, and verification of non-accessible elements in applications. A possible disadvantage is a delay caused by taking and processing screenshots of applications that have to be taken at the right time. The OpenCV's image matching algorithm can reliably locate prearranged images of icons, labels, or whole application windows on the screen. Considering a stable application environment with a black text on a white background in most applications, Tesseract can detect and reliably locate most of the text content on the screen. Other cases can be covered by image preprocessing done again in OpenCV. Both technologies are working with the actual application content rendered to users, possibly bringing an additional level of verification. However, the goal of this work is to generate test cases dynamically and preparation of a set of screenshots to verify a proper rendering of icons would violate this effort. A solution for such a situation, would be to take screenshots during the test generation process. However, an icon would need to be cropped out from the screenshot, thus relying on the position of the icon reported by the AT-SPI. Therefore, an integration of the Tesseract's OCR is more beneficial for this project.
 
 \chapter{Design of the Proposed Test Generator}\label{proposed_solution}
 In this chapter, we present the design of our test generator. Section \ref{model} explains reasons behind the implementation of a custom representation of an application model. In Section \ref{test_env}, we discuss a setup and a configuration of the test environment required for the tested applications. Section \ref{generator_output} describes the structure of the generated test cases. Then in Section \ref{generation}, we describe the algorithm for test case generation. Finally, Section \ref{OCR} addresses the integration of the Tesseract's OCR engine in our test generator.
 
 A goal of this work is to develop a tool capable of generating automated test cases for GUI applications. The proposed test generator works with AT-SPI metadata provided by applications and converts them to test cases. The required metadata should be available for a lot of applications, assuming they are developed in one of the common frameworks (GTK3, QT). However, this tool is focused on testing of GUI applications developed for the GNOME desktop\footnote{\url{https://wiki.gnome.org/Apps}}. A tool is developed in Python3, version 3.6.
-
-The GNOME applications are open source, and they are being developed by community of enthusiasts around the GNOME project. Anyone from the community can fix bugs in applications by sending a merge request with fixes, request a new feature, or propose newly developed features. This development model does not contain a planning phase or a phase where one can design an abstract model of an application, from which test cases could be derived. Therefore, our solution is based on deriving the model of a GUI application from the AT-SPI metadata. The extracted data about widgets and relationships between them provide the foundation which gives the test generator the ability to interact with an application. Therefore, the test generator can use the extracted information to perform exploratory testing. The testing includes execution of scenarios (so-called \textit{event sequences}), monitoring the behavior of the SUT, and detection of certain errors and crashes of the SUT. Test cases are generated as a by-product of this process.
 
 \begin{figure}[hbt!]
 	\centering
@@ -276,12 +276,23 @@ The GNOME applications are open source, and they are being developed by communit
 	\label{Diagram}
 \end{figure}
 
-Figure 4.1 describes an overview of the workflow when testing with the proposed test generator. The beginning of the scenario starts with either a newly developed application or a version of an application that contains major changes. The tool performs an  initial exploratory testing of the application based on the extracted model and export those scenarios in the form of \textit{behave} test scenarios.
+The GNOME applications are open source, and they are being developed by community of enthusiasts around the GNOME project. Anyone from the community can fix bugs in applications by sending a merge request with fixes, request a new feature, or propose newly developed features. This development model does not contain a planning phase or a phase where one can design an abstract model of an application, from which the test cases could be derived. Therefore, our solution is based on deriving the model of a GUI application from the AT-SPI metadata. The extracted data about widgets and relationships between them provide the foundation which gives the test generator the ability to interact with an application. Therefore, the test generator can use the extracted information to perform exploratory testing. The testing includes execution of scenarios (so-called \textit{event sequences}), monitoring the behavior of the SUT, and detection of certain errors and crashes of the SUT. Test cases are generated as a by-product of this process.
 
-From the testing perspective, the proposed tool combines several testing techniques. The extracted AT-SPI metadata create a foundation for a simplified model of the application by partially adapting the model-based testing technique. Since the test cases are derived from the model without any knowledge about the implementation of the tested application, the tool resides in the category of black-box testing. The knowledge about the SUT provided by the model allows the tool to benefit from the approaches described in the random input testing and random walk tools in a more deterministic way. The tool can be characterized as a semi-smart tool as it can detect certain crashes of the SUT during the test generation and immediately report them with a reproducer. The results of the test generation process are test cases that may be adjusted and executed again. The tests are executable in the CI/CD pipeline that can be triggered at any stage of the application development and report the results without manual retesting.
+
+Figure \ref{Diagram} describes an overview of the workflow when testing with the proposed test generator. The beginning of the scenario starts with either a newly developed application or a version of an application that contains major changes. The tool performs an  initial exploratory testing of the application based on the extracted model and exports those scenarios in the form of \textit{behave} test scenarios.
+
+From the testing perspective, the proposed tool combines several testing techniques. The extracted AT-SPI metadata create a foundation for a simplified model of the application by partially adapting the model-based testing technique. Since the test cases are derived from the model without any knowledge about the implementation of the tested application, the tool resides in the category of black-box testing. The knowledge about the SUT provided by the model allows the tool to benefit from the approaches described in the random input testing and random walk tools in a more deterministic way. The tool can be characterized as a semi-smart tool as it can detect certain crashes of the SUT during the test generation and immediately report them with a reproducer. The results of the test generation process are test cases that may be adjusted and executed again. The tests are executable in the CI/CD pipeline that can be triggered at any stage of the application development and reports the results without manual retesting.
+
+% \begin{figure}[hbt!]
+% 	\centering
+% 	\includegraphics[width=0.7\textwidth]{obrazky-figures/testgen.pdf}
+% 	\caption{An over}
+% 	\label{Diagram}
+% \end{figure}
+
 
 \section{Model Extraction}\label{model}
- In this section, we justify the implementation of a custom accessibility tree that serves as a model of a tested application for our test generator. Further, we present the abstract definition of the model, followed by the implementation details of the custom accessibility tree.
+ In this section, we justify and present the implementation of a custom accessibility tree that serves as a model of a tested application for our test generator. 
  
 \paragraph{Custom Model Justification} The model extraction process relies on the AT-SPI metadata that is provided after the start of an application. As mentioned in Section \ref{library_pyatspi}, once the application is running, a tree of widgets is exposed and available for interaction. The provided representation of the tree itself is not suitable to be directly used as a model of an application because the implementation contains several restrictions for the purposes of this work.
 
@@ -291,27 +302,27 @@ The accessibility tree also contains references to properties and methods which 
 
 Additionally, the custom implementation of the model allows us to track the progress of the test generation process. The model consists of objects gathered in event sequences, each object has its unique identity that lasts throughout the test generation process. This implementation allows us to measure the event coverage and ensures that an already executed event sequence is never repeated.
 
-\paragraph{Abstract Model Representation} A solution for previously mentioned restrictions is a custom implementation of the accessibility tree that also serves as a model of applications for our test generator. The model consists of the following elements:
+% \paragraph{Abstract Model Representation}  The model consists of the following elements:
 
-\begin{itemize}
-\item A \textit{Node} is an abstraction that represents widgets of a tested application.
-\item An \textit{Event} represents an action that is associated with a widget and is executable by the accessibility technology.
-\end{itemize}
+% \begin{itemize}
+% \item A \textit{Node} is an abstraction that represents widgets of a tested application.
+% \item An \textit{Event} represents an action that is associated with a widget and is executable by the accessibility technology.
+% \end{itemize}
 
-From the introduced elements, we build the model as an abstraction of a tested application. 
+% From the introduced elements, we build the model as an abstraction of a tested application, as follows:
 
-\theoremstyle{definition}
-\begin{definition}
-A Model $M$ is a 4-tuple: $M = (N, T, E, S)$ representing a directed graph, where:
-\begin{enumerate}
-\item $N$ is a finite set of $Node$ elements; 
-\item $T\ \subseteq\ Node\ \times \ Event\ \times \ Node$ is a transition relation;
-\item $E$ is a finite set of $Event$ elements,  $E\ =\ \{e\ |\ (n_S, e, n_T)\ \in\ T \land \ e \in E \ \land \ n_S,n_T\ \in \ N\}$;
-\item $S$ is a set of starting $Node$ elements, $S\ \subseteq\ N$.
-\end{enumerate}
-\end{definition}
+% \theoremstyle{definition}
+% \begin{definition}
+% A Model $M$ is a 4-tuple: $M = (N, T, E, S)$ representing a directed graph, where:
+% \begin{enumerate}
+% \item $N \subseteq Node is a finite set of nodes of the model$; 
+% \item $T\ \subseteq\ N\ \times \ Event\ \times \ N$ is a transition relation;
+% \item $E$ is a finite set of $Event$ elements,  $E\ =\ \{e\ |\ (n_S, e, n_T)\ \in\ T \land \ e \in E \ \land \ n_S,n_T\ \in \ N\}$;
+% \item $S$ is a set of starting nodes, $S\ \subseteq\ N$.
+% \end{enumerate}
+% \end{definition}
 
-\paragraph{Model Implementation} Test case generation requires that a custom tree is derived from the accessibility tree provided by the \textit{dogtail}. The unusable nodes are filtered out, while the parent-child relationships of the nodes are preserved. The custom tree can be used as a model, that will map the possibilities of interactions available for users working with an application. The model includes every node from the original tree with available actions that are also executable by the AT-SPI.
+\paragraph{Model Implementation} A solution for previously mentioned restrictions is a custom implementation of the accessibility tree that also serves as a model of applications for our test generator. Test case generation requires that a custom tree is derived from the accessibility tree provided by the \textit{dogtail}. The unusable nodes are filtered out, while the parent-child relationships of the nodes are preserved. The custom tree can be used as a model, that will map the possibilities of interactions available for users working with an application. The model includes every node from the original tree with available actions that are also executable by the AT-SPI.
 
 Our development revealed that not all rendered widgets are properly labeled with actions by AT-SPI. The affected nodes are the ones with role names \texttt{page tab} and \texttt{list item}. The former has to be clicked to gain access to additional nodes, the latter can be placed on the same level as a push button. Therefore, our generator relies on records in the file \texttt{roleNames.py} where the role names of actionless nodes are enumerated. If a node is not associated with any action, the default action for the node is \texttt{click}.
 
@@ -320,7 +331,7 @@ However, the model does not allow to execute the associated actions directly, as
 \begin{figure}[hbt!]
 	\centering
 	\includegraphics[width=0.8\textwidth,clip]{obrazky-figures/tree_diagram.pdf}
-	\caption{The class diagram of a custom application tree that serves as an application model for our test generator}
+	\caption{The class diagram of the custom application tree that serves as an application model for our test generator}
 	\label{tree_diagram}
 \end{figure}
 
@@ -328,7 +339,7 @@ Starting from the lowest level, an instance of the class \texttt{GNode} represen
 
 \section{Test Environment}\label{test_env}
 
-This section describes conditions that need to be achieved in the GNOME environment for our test generator. Subsection \ref{test_ev_setup} addresses phenomenons that can occur in the GNOME Shell environment and need to be suppressed during the test generation. It also introduces the \textit{qecore} library designed to handle this kind of issues. Subsection \ref{env_config} describes a method and parameters used to configure our test generator for various applications. Subsection \ref{flatpak_setup} offers a brief introduction to \emph{Flatpak} applications, then explains why our test generator needs to acquire support to test such applications as well as contributions to the \textit{qecore} library that were submitted and approved. Subsection \ref{monitoring} concludes this section with a description how applications are executed and monitored during the test generation. 
+This section describes conditions that need to be achieved in the GNOME environment for our test generator. Subsection \ref{test_ev_setup} addresses phenomenons that can occur in the GNOME Shell environment and need to be suppressed during the test generation. It also introduces the \textit{qecore} library designed to handle this kind of issues. Subsection \ref{env_config} describes a method and parameters used to configure our test generator for various applications. Subsection \ref{flatpak_setup} offers a brief introduction to \emph{Flatpak} applications, then explains why our test generator needs to acquire support to test such applications as well as contributions to the \textit{qecore} library that were submitted and approved. Subsection \ref{monitoring} concludes this section with a description of how applications are executed and monitored during the test generation. 
 
 \subsection{Test Environment Setup}\label{test_ev_setup}
 
@@ -340,15 +351,6 @@ The test generation process relies on the environment setup provided by the \tex
 
 During the development of our test generator, we also contributed to the implementation of the \textit{qecore} module. We introduced a \texttt{desktop\_file\_path} property for the \texttt{Application} class to solve the problems with location of \texttt{.desktop} files required to test LibreOffice applications. We also submitted a couple of smaller
 fixes\footnote{\url{https://gitlab.com/dogtail/qecore/-/merge_requests/24}}\textsuperscript{,}\footnote{\url{https://gitlab.com/dogtail/qecore/-/merge_requests/26}}. The mentioned proposals were approved and merged.
-
-
-\subsection{Test Generator Configuration}\label{env_config}
-
-Assurance of compatibility with various applications across the GNOME ecosystem requires that some metadata describing the tested application has to be provided before the test generation process. 
-
-The metadata is gathered in a configuration file written in the YAML\footnote{\url{https://yaml.org/}} language. The reasons behind choosing YAML is syntax simplicity and human readability in comparison with JSON\footnote{\url{https://www.json.org/json-en.html}} or XML\footnote{\url{https://www.w3.org/XML/}}, followed by the reliable support in Python provided by the library \textit{pyyaml} \cite{yaml}.
-
-Our generator uses the configuration file \texttt{apps.yaml} where we store records about all tested applications. An example for an application record can be seen in Listing \ref{apps_yaml}. 
 
 \begin{lstlisting}[language=yaml,caption={
 An example of the apps.yaml entry for LibreOffice StartCenter},label={apps_yaml}]
@@ -366,7 +368,17 @@ libreoffice-startcenter:
   flatpak: False
 \end{lstlisting}
 
-An application record starts with a name of application on the top level. The application name should be unique as the name is used as a folder name of the generated project. The metadata are stored as values with keys. A large group of keys matches the names of \texttt{App/Application} class properties. Some of the items are not be necessary for the test generation, although they are required for the test execution. Required keys/values may vary per tested application. The list of keys/values that can be defined for each application includes:
+\subsection{Test Generator Configuration}\label{env_config}
+
+Assurance of compatibility with various applications across the GNOME ecosystem requires that some metadata describing the tested application has to be provided before the test generation process. 
+
+The metadata is gathered in a configuration file written in the YAML\footnote{\url{https://yaml.org/}} language. The reasons behind choosing YAML is syntax simplicity and human readability in comparison with JSON\footnote{\url{https://www.json.org/json-en.html}} or XML\footnote{\url{https://www.w3.org/XML/}}, followed by the reliable support in Python provided by the library \textit{pyyaml} \cite{yaml}.
+
+Our generator uses the configuration file \texttt{apps.yaml} where we store records about all tested applications. An example for an application record can be seen in Listing \ref{apps_yaml}. 
+
+
+
+An application record starts with a name of application on the top level. The application name should be unique, as the name is used as a folder name of the generated project. The metadata are stored as values with keys. A large group of keys matches the names of \texttt{App/Application} class properties. Some of the items are not necessary for the test generation, although they are required for the test execution. Required keys/values may vary per tested application. The list of keys/values that can be defined for each application includes:
 
 \begin{itemize}
     \item \texttt{a11y\_app\_name} -- This is the only compulsory item. It defines a name of the application in the accessibility tree. The value can be found in GUI tools Sniff or Accerciser as previously discussed in Section \ref{sniff_accerciser}. The value can match with the name of the application.
@@ -389,7 +401,7 @@ An application record starts with a name of application on the top level. The ap
 
 This subsection is dedicated to a brief introduction to Flatpak applications, followed by explanation why Flatpaks needed to be integrated in our test generator. Further, we discuss an effort that has been done to support Flatpak applications in our test generator.
 
-\paragraph{Flatpak} Desktop applications on Linux are being distributed through various distribution-specific package managers. Flatpak\footnote{\url{https://flatpak.org/}} is a technology for building and distributing desktop applications on Linux that aims to solve the problem with cross-platform distribution of packages on Linux. Applications, or so-called flatpaks, are delivered to users regardless of the lifecycle of the underlying Linux distribution. The system implements a set of sandboxing technologies, to isolate Flatpaks from each other and the system, thus providing security benefits to users~\cite{flatpak}.
+\paragraph{Flatpak} Desktop applications on Linux are being distributed through various distribution-specific package managers. Flatpak\footnote{\url{https://flatpak.org/}} is a technology for building and distributing desktop applications on Linux that aims to solve the problem with a cross-platform distribution of packages on Linux. Applications, or so-called flatpaks, are delivered to users regardless of the lifecycle of the underlying Linux distribution. The system implements a set of sandboxing technologies, to isolate Flatpaks from each other and the system, thus providing security benefits to users~\cite{flatpak}.
 
 The majority of GNOME applications are also available through flatpak. A dedicated flatpak repository \textit{Nightly GNOME Apps} contains the latest development versions of GNOME applications. With flatpak, those applications are installed alongside their stable versions. This gives us the potential to test the application much sooner before it is released to distributions. This is a benefit behind the integration of flatpak support to this work. The main repository for flatpak applications called Flathub\footnote{\url{https://flathub.org/home}} contains hundreds of applications developed in various frameworks and programming languages. However, the effort done by this work only supports applications developed in GTK3 as they obtain the accessibility support by design.
 
@@ -420,7 +432,7 @@ This subsection describes the method used by our test generator to execute and m
 \paragraph{Execution} The test generation process performs various actions available in an application that might change settings or layout of the application. Therefore, every test case must start from the same state which should satisfy the following conditions: 
 \begin{enumerate}
     \item an application is not running, if so, force the application to stop;
-    \item reset the application's settings to the default state by performing a predefined custom cleanup;
+    \item reset the applications' settings to the default state by performing a predefined custom cleanup;
     \item start a new instance of the application with the default settings;
     \item make sure that application is ready for an interaction.
 \end{enumerate}
@@ -430,8 +442,6 @@ This subsection describes the method used by our test generator to execute and m
 Furthermore, it is also necessary to perform certain checks during the time an application is being interacted with. Therefore, every tested application will be run as a sub-process, which enables us to capture the output generated by tested applications to standard streams (\textit{stdout, stderr}). Once an application has been terminated, it also allows us to check the return codes. The implementation relies on the Python's standard library \texttt{subprocess}. 
 
 The output generated to the standard stream is checked for errors defined in the designated configuration file. In case of error throughout the generation process, an error message is printed immediately to warn about the possible bug in tested applications. The warning contains the number identifying the test in which the error occurred, a full error message, and a return code. All other captured messages, e.g., warnings or deprecation messages from the GTK framework are saved to one log file, in a folder where the tests are generated. The messages are being appended, so the log file can be checked at any time during the generation process. Every line contains the test number, so it can be easily determined when the message occurred and match it with the reproducer from the given test case.
-
-
 
 \section{Generating an Environment for the Test Execution}\label{generator_output}
 This section describes an output of our test generator along with description of individual files that are required for execution of generated test cases. The input of the test generator is provided by the application metadata located in \texttt{apps.yaml}. The output is a project structure containing generated test cases and other files required for the test execution. 
@@ -471,7 +481,7 @@ The folder \texttt{steps} contains source files with the implementation of the \
 
 \begin{lstlisting}[
 style=mypython,
-caption={The implementation of the step that is used to make an assertion on any of the node's property},
+caption={The implementation of the step that is used to perform an assertion on any of the properties belonging to an accessible node},
 label={step_definition},
   frame=tb,
   numbers=left
@@ -484,20 +494,18 @@ def assert_state(ctx, name, roleName, prop, state):
     prop_value = f'{getattr(node, prop)}'
     assert state == prop_value, f'Expected: {state}, Got: {prop_value}'
 \end{lstlisting}
-
 The file \texttt{gnome-terminal.log} aggregates log messages produced by a tested application throughout the test generation process. The log file name is derived from the application name defined in the \texttt{apps.yaml} file. The \texttt{mapper.yaml} file contains a list of test cases with other data required for the CI execution. The file \texttt{requirements.py} contains all Python dependencies that need to be installed to execute the test cases. Finally, the \texttt{runtest.sh} is a wrapper script for execution of test cases.
 
 \section{Test Case Generation}\label{generation}
 
-This section describes and environment created for tested applications by our test generator, and also makes tests executable after the test generation process.
+In this section, we describe the test generation process. The Subsection \ref{event_sequences} describes the extraction of event sequences from the model of an application. Subsection \ref{testing} describes the execution of the extracted event sequences. In Subsection \ref{expansion}, we discuss the node expansion process performed by the test generator during the test generation.
 
-The test generator implementation is encapsulated in the class \texttt{TestGen} (class diagram in Figure \ref{test_gen}). The behavior of the generator can be also influenced by several command-line arguments that will be described later in this work. Based on the parameters (\texttt{flatpak} item in \texttt{apps.yaml}), the instance of either the \texttt{App} or the \texttt{FlatpakApp} is created. 
+The implementation of the test generator is encapsulated in the class \texttt{TestGen} (class diagram in Figure \ref{test_gen}). The behavior of the generator can be also influenced by several command-line arguments that will be described later in this work. Based on the parameters (\texttt{flatpak} item in \texttt{apps.yaml}), the instance of either the \texttt{App} or the \texttt{FlatpakApp} is created. 
 
-The generator then creates a copy of the default project structure and injects the files inside the project structure with values that correspond to the application that is going to be tested (Figure \ref{project_folder}). Namely, the files \texttt{environment.py}, \texttt{mapper.yaml}, and \texttt{cleanup.sh} contain placeholders (tags) that are replaced by values defined in \texttt{apps.yaml}. Just note that no Python code is being generated during the process. The default project already contains all the predefined \textit{behave} steps required to execute generated test cases.
+The generator then creates a copy of the default project structure and injects the files inside the project structure with values that correspond to the application that is going to be tested (Figure \ref{project_folder}). Namely, the files \texttt{environment.py}, \texttt{mapper.yaml}, and \texttt{cleanup.sh} contain special placeholders (tags) that are replaced by values defined in \texttt{apps.yaml}. Just note that no Python code is being generated during the process. The default project already contains all the predefined \textit{behave} steps required to execute generated test cases.
 The next sections are dedicated to the details of the generation algorithm. Algorithm \ref{test_gen_algorithm} contains a shorter version written in a pseudocode. 
 
-\begin{center}
-\begin{algorithm}[htb!]
+\begin{algorithm}[tb!]
 \caption{Test generation algorithm pseudocode}
 \label{test_gen_algorithm}
 \SetAlgoLined
@@ -508,10 +516,10 @@ The next sections are dedicated to the details of the generation algorithm. Algo
  derive the event sequences\;
  terminate the application\;
 \SetKw{KwInn}{in} 
- \ForEach{$event_sequence$ \KwInn $event\_sequences$}{
+ \ForEach{$event\_sequence$ \KwInn $event\_sequences$}{
  application cleanup, if required\;
  start the application\;
-  \ForEach{$action$ \KwInn $event_sequence$}{
+  \ForEach{$action$ \KwInn $event\_sequence$}{
    save the state before the action is executed\;
    execute the $action$\;
    add the action step to the test case\;
@@ -537,22 +545,36 @@ The next sections are dedicated to the details of the generation algorithm. Algo
  }
  }
 \end{algorithm}
-\end{center}
+\subsection{Derivation of Event Sequences}\label{event_sequences}
+This subsection describes how our test generator extracts event sequences and explains lines 1--4 from Algorithm \ref{test_gen_algorithm}.
 
-% duplicit node renaming
-\subsection{Derivation of Event Sequences}
+The generator begins with a first start of a tested application and extracts the AT-SPI tree of the application instance through the \texttt{dogtail}. Then, a writable copy of the tree is created through the \texttt{GTree} instance. The action-less nodes are then removed by creating a new instance of the \texttt{TestTree} class. 
 
-The generator begins with a first start of a tested application and extracts the AT-SPI tree of the application instance through the \texttt{dogtail}. Then, a writable copy of the tree is created through the \texttt{GTree} instance. The action-less nodes are then removed and the remaining notes are placed in the new instance of the \texttt{TestTree} class. Test cases are derived from the test tree through the class method \texttt{test\_sequences}. 
 
-The method returns a list\footnote{\url{https://docs.python.org/3/tutorial/datastructures.html}} with event sequences. A event sequence contains a list of nodes with actions that will be executed for every test case. The method gathers the list of leaves in the \texttt{TestTree}. Then it iterates through the list of leaves and calculates the path from a leaf to the root of the tree. Each path contains a list of nodes. The result is a list of paths or as mentioned earlier event sequences. A event sequence does not represent a whole test case. The whole test case is created by applying the event sequence on the live instance of the application. While applying the event sequence, the generator appends assertions steps and OCR checks. The checks are generated either before or after the execution of actions and they will be used as a verification in a generated test case to confirm that the application reached the intended state. A event sequence can be used multiple times or it can be extended, if the generator discovers that the applied sequence led to a discovery of new nodes. Those new nodes are evaluated and the generator creates new event sequences, each of those sequences start with a sequence that led to their discovery. 
+\paragraph{Event Sequence} The core of our test cases is derived from the \texttt{TestTree} through the class method named \texttt{test\_sequences}. The method returns a list\footnote{\url{https://docs.python.org/3/tutorial/datastructures.html}} of event sequences. An event sequence contains a list of nodes associated with actions that will be executed for every test case. Listing \ref{event_sequences} shows an output produced by the \texttt{print\_sequences} method used for debugging. For each \texttt{GNode} instance, we print a \texttt{name}, a \texttt{roleName} and an {action} separated by \texttt{=>}. 
 
-\subsection{Execution of Event Sequences}
-The initial phase is completed by the termination of the application instance, the generator continues with the execution of event sequences (line 8 of Algorithm \ref{test_gen_algorithm}). From this point the generator works with 3 instances of the tree: the current running application instance obtained through \textit{dogtail}, the instance of the class \texttt{Gtree}, the instance of the class \texttt{TestTree} or so-called model used to derive the tests.
-% online testing
-% graph
-The test generator then starts to iterate over the extracted event sequences, monitors the application, executes actions, and generates steps and assertions that are then put together in \textit{behave} scenarios. 
+\begin{lstlisting}[
+caption={An example of the event sequence extracted from LibreOffice StartCenter.},
+label={event_sequence},
+  breaklines=true,
+  breakatwhitespace=true
+ ]
+LibreOffice:frame: => File:menu:click => New:menu:click => Text Document:menu item:click
+\end{lstlisting}
 
-Every iteration of the event sequences works with a newly started instance of the application, so every scenario begins with a step that starts the application. The step internally contains an assertion to make sure that the application has started and is ready for the interaction. The generator stores a shallow copy of the list containing the applications that are currently available through AT-SPI. It also saves a copy of the currently available nodes in the tested application. 
+The \texttt{test\_sequences} method iterates through the list of leaves and calculates the path from a leaf to the root of the tree. The result is a list of paths or as mentioned earlier a list of event sequences.
+
+An event sequence does not represent a whole test case. The whole test case is created by applying the event sequence on the live instance of the application. While applying the event sequence, the generator appends assertions steps and OCR checks. The checks are generated either before or after the execution of actions and they will be used as a verification in a generated test case to confirm that the application reached the intended state. An event sequence can be used multiple times or it can be extended, if the generator discovers that the applied sequence led to a discovery of new nodes. Those new nodes are evaluated and the generator creates new event sequences, each of those sequences start with a sequence that led to their discovery. 
+
+
+
+\subsection{Execution of Event Sequences}\label{testing}
+In this subsection, we describe how we used the extracted event sequence to create a test case. From this point the generator works with 3 instances of the tree: the currently running application instance obtained through \textit{dogtail}, the instance of the class \texttt{Gtree}, the instance of the class \texttt{TestTree} or so-called model used to derive the tests.
+
+
+The test generator then starts to iterate over the extracted event sequences, monitors the application, executes actions, and generates steps and assertions that are then put together in \textit{behave} scenarios. The implementation of the steps used in generated test cases is discussed in Section~\ref{step_definition}.
+
+Every iteration of the event sequences (see line 5 in Algorithm \ref{test_gen_algorithm}) works with a newly started instance of the application, so every scenario begins with a step that starts the application. The step internally contains an assertion to make sure that the application has started and is ready for the interaction. The generator stores a shallow copy of the list containing the applications that are currently available through AT-SPI. It also saves a copy of the currently available nodes in the tested application. 
 
 The generator selects the first node from the sequence and locates the node within the currently running instance of the application. In case that application contains too many nodes (widgets), some of them might be hidden. The generator tries to avoid that by using \texttt{grabFocus} method on the node. The method does not work for menus, where the \texttt{select} method has to be used instead.  Additionally, the \texttt{node.sensitive} property is checked. If the value of the property is \texttt{False}, the generator prints a warning as the value indicates that the action might not be executable in the current state. Then the action associated with the node is executed. If the execution of the action was successful, the event coverage is increased and a step with the description of the node and executed action is added to the test scenario. The execution of the action is followed by several checks performed on the current instance.
 
@@ -564,18 +586,18 @@ If the return code does not contain the value 0, the generator raises the error,
 
 In some cases, the occurrence of an error does not mean that the application crashes. Therefore, the generator checks the log for known errors after every executed action regardless of the state of the application. The list of the messages that are being checked is stored in the file \texttt{errors.py}. A new error message can be appended to the list at any time. The list currently contains messages that previously occurred in bugs related to \textit{GNOME} applications.
 
-\subsection{Model Expansion}
-This subsection provides a description of the model expansion during the test generation process. The description contains an explanation how our test generator scans an application for new nodes (widgets) as well as creation of test cases for these nodes.
+\subsection{Model Expansion}\label{expansion}
+This subsection provides a description of the model expansion during the test generation process. The description contains an explanation how our test generator scans an application for new nodes (widgets) as well as creation of test cases for these nodes. We also explain the remaining part of the Algorithm \ref{test_gen_algorithm} that starts from line 20.
 
 Successful execution of the action, followed by no errors detected in the log and application still being run, indicates that the action could have changed the state of the application. 
 
-Initially, the generator checks whether the action triggered the execution of a new application. The detection is achieved through the symmetrical difference computed on two sets. The first one contains the list nodes representing running applications before the action was executed, the second one holds the list of applications available after the execution. Both lists are shallow copies, so the generator does not need to compare an entire tree for each application. If that is a case, the generator appends the assertion implying that the applied sequence led to the start of a new application. The test generator does not expand the nodes of the newly spawned application to the current test tree as they do not belong to the application that is currently being tested. This solution has limitations, an application that is not exposed to the accessibility bus will not be detected.
+Initially, the generator checks whether the action triggered the execution of a new application. The detection is achieved through the symmetrical difference computed on two sets. The first one contains the list nodes representing running applications before the action was executed, the second one holds the list of applications available after the execution. Both lists are shallow copies, so the generator does not need to compare an entire tree for each application. If that is a case, the generator appends the assertion implying that the applied sequence led to the start of a new application. The test generator does not expand the nodes of a newly spawned application to the current test tree as they do not belong to the application that is currently being tested. This solution has limitations, an application that is not exposed to the accessibility bus will not be detected.
 
 If the previously described effort failed, the generator proceeds to search for the changes within the tree of the tested application. The implementation takes advantage of the method \texttt{get\_node\_list} from the class \texttt{GTree}. The method returns all nodes from the tree instance in one \textit{list}. The list is converted to a set, and similarly to the process of detection of a new application, it calculates the symmetric difference between sets captured before and after the executed action. 
 
 The generator distinguishes between several roles of the discovered nodes. The appearance of a new window or a dialog causes the generation of an assertion to the current test case. Regardless of a role, the generator creates a \texttt{TestTree} instance with new nodes (a subtree) and retrieves event sequences derived from the subtree. The new event sequences are prepended with the sequence that led to their discovery and then added to the list of the event sequences that will be executed in the next iterations.
 
-The expansion during the test case generation can significantly increase the execution time. The test generator implements an option \texttt{{-}{-}shallow} that disables the expansion and generates test cases only from the model obtained from after the start of the application. The option gives testers the ability to obtain fundamental test cases that can be reviewed and updated in a much shorter time.
+The expansion during the test case generation can significantly increase the execution time. The test generator implements an option \texttt{{-}{-}shallow} that disables the expansion and generates test cases only from the model obtained after the start of the application. The option gives testers the ability to obtain fundamental test cases that can be reviewed and updated in a shorter time.
 
 % \subsection{Generating Reports}
 
@@ -597,9 +619,9 @@ In this subsection, we discuss the implemented optimizations that were required 
 
 As discussed in \ref{OCR_section}, Tesseract is less prone to errors when operating with images containing black text on a white background. Therefore, we used a thresholding method to convert screenshots to binary colors (black and white). However, some applications use darker color themes or contain parts with different color schemes. If we used the thresholding method with such application it would provide us with an opposite result. Therefore, our solution always extracts strings from two images. The first one is a binarized copy of the original image, the second one is a copy of the binarized image with inverted colors. This ensures that the Tesseract's OCR engine has the best possible conditions to obtain the string from the screen. Given that the string is present on the screen, it should be found regardless of a theme set in an application. A demonstration of the image conversions is shown in Figure \ref{ocr_conversion}, containing 3 images, ordered from the top: the original image, the binarized image, and the inverted binarized image. 
 
-\begin{minipage}{\linewidth}
+
 \begin{lstlisting}[
-caption={Extracted text without optimizations Figure \ref{ocr_conversion}},label={OCR_text1}]
+caption={Text extracted from the original image in Figure \ref{ocr_conversion} without optimizations},label={OCR_text1}]
 s
 ALY
 O BTEE T
@@ -609,11 +631,11 @@ test@localhost:
 Edit View Search Terminal Help
 [test@localhost ~1$ Hello world![]
 \end{lstlisting}
-\end{minipage}
 
-Listing \ref{OCR_text1} demonstrates the results obtained from the original image without any uptimizations. The Tesseract's OCR engine manages to extract certain strings from the screen, although the results are not reliable and thus may lead to false-positive reports during the test execution. Further experiments have shown additional issues with text formatting as well as difficulties with recognition of similarly looking letters. An example can be seen on line 8 (see Listing \ref{OCR_text1}), where character \texttt{]} was misinterpreted as character \texttt{1}. These issues were suppressed by upscaling the resolution of the original image to 3,200 x 2,400 pixels.
 
-\begin{lstlisting}[caption={Extracted text with optimizations},label={OCR_text2}]
+Listing \ref{OCR_text1} demonstrates the results obtained from the original image without any optimizations. The Tesseract's OCR engine manages to extract certain strings from the screen, although the results are not reliable and thus may lead to false-positive reports during the test execution. Further experiments have shown additional issues with text formatting as well as difficulties with recognition of similarly looking letters. An example can be seen on line 8 (see Listing \ref{OCR_text1}), where character \texttt{]} was misinterpreted as character \texttt{1}. These issues were suppressed by upscaling the resolution of the original image from 1,024 x 768 pixels to 3,200 x 2,400 pixels.
+
+\begin{lstlisting}[caption={Text extracted from Figure \ref{ocr_conversion} with all implemented optimizations},label={OCR_text2}]
 Activities
 Terminal ~
 a4
@@ -624,7 +646,7 @@ File Edit View Search Terminal Help
 [test@localhost ~]$ Hello World![}
 \end{lstlisting}
 
-Listing \ref{OCR_text2} shows results achieved with image preprocessing methods. when we  contains the extracted strings with  When compared to Listings \ref{OCR_text1}, it proves an increase of the efficiency achieved with the implemented optimization. The result contains all important strings shown on the screen. Additionally, the OCR engine reports some random characters which are probably caused by a misinterpretation of a group of smaller icons in the picture. The image upscaling is achieved through the \textit{Pillow}\footnote{\url{https://pypi.org/project/Pillow/}} library, the image conversions are implemented through methods from the \textit{OpenCV} library. 
+Listing \ref{OCR_text2} shows results achieved with image preprocessing methods. When compared to the results shown on Listing \ref{OCR_text1}, it proves an increase of the efficiency achieved with the implemented optimization. The result contains all important strings shown on the screen. Additionally, the OCR engine reports some random characters which are probably caused by a misinterpretation of a group of smaller icons in the picture. The image upscaling is achieved through the \textit{Pillow}\footnote{\url{https://pypi.org/project/Pillow/}} library, the image conversions are implemented through methods from the \textit{OpenCV} library. 
 
 The time consumed by taking screenshots during the generation process is significant. Therefore, the developed tool has the ability to disable the generation of the OCR steps during the generation of test cases through the command line parameter \texttt{-{}-disable-OCR}. If the generated test cases already contain steps performing OCR checks and are intended to be executed without them, the tests can be executed with the shell variable \texttt{OCR=False}. The defined variable will cause skipping of the OCR checks, although they will still be shown in the test logs as executed. This is caused by the limitation of the behave framework as it only allows one to skip whole test scenarios. Tests executed with the variable set to skip the OCR steps will contain a warning message.
 
@@ -636,7 +658,7 @@ The results obtained from experiments with the OCR were implemented to a single 
 Listing \ref{ocr_test} contains a test case generated for \textit{LibreOffice StartCenter} with two OCR steps. During the test, the OCR engine confirms the presence of the string \texttt{Spreadsheet} on line~7. Another OCR step is on line~10, where the OCR confirms a presence of the window title \texttt{Untitled 1 - LibreOffice Calc} on the screen.
 
 \begin{lstlisting}[language=Gherkin,caption={
-A test case demonstrating the integration of OCR into test cases},label={ocr_test}]
+A test case demonstrating the integration of OCR into test cases},label={ocr_test}, float]
 @1_Spreadsheet
 Scenario: libreoffice-startcenter: Spreadsheet
   * Start: "libreoffice-startcenter" via command "libreoffice --norestore" in session
@@ -655,12 +677,12 @@ OCR steps are not added to test cases automatically. Our test generator may enco
 In this section, we describe the \textit{behave} test cases that are generated by our test generator as well as logs that are generated during the test runs. 
 
 The result of the generation process is available in a folder structure named after a test application and contains generated test cases, configuration files, and scripts for execution in the CI environment. 
-Generated \textit{behave} test scenarios are located in the file named \texttt{generated.feature}. The file contains all the test cases divided into so-called scenarios. Each scenario (see Listing~\ref{ocr_test}) has a unique name starting with character \texttt{@} that allows single test execution if required. All tests are executable by issuing a command \texttt{behave} in the generated project folder. The tests are also respecting the cleanup commands which are set in \texttt{apps.yaml}. The cleanup is always executed after the finish of the test, regardless of the result of the executed tests. Execution of \texttt{behave} either prints steps from a test scenario to standard output or can generate an HTML log for every scenario (see Figure~\ref{lo_report_html}). This log format is more suitable for examination of the results executed in the CI environment accessible through the web interface. Furthermore, the \textit{qecore} library embeds data collected during the test runs to the \textit{behave} reports of failed test cases. Therefore, the reports contains videos captured during the test runs, screenshots taken in a moment when a test case failed and additional logs. The additional data helps with identification of potential flaws in tests that could cause a false-positive results.
+Generated \textit{behave} test scenarios are located in the file named \texttt{generated.feature}. The file contains all the test cases divided into so-called scenarios. Each scenario (see Listing~\ref{ocr_test}) has a unique name starting with character \texttt{@} that allows single test execution if required. All tests are executable by issuing a command \texttt{behave} in the generated project folder. The tests are also respecting the cleanup commands which are set in \texttt{apps.yaml}. The cleanup is always executed after the finish of the test, regardless of the result of the executed tests. Execution of \texttt{behave} either prints steps from a test scenario to standard output or can generate an HTML log for every scenario (see Figure~\ref{lo_report_html}). This log format is more suitable for examination of the results executed in the CI environment accessible through the web interface. Furthermore, the \textit{qecore} library embeds data collected during the test runs to the \textit{behave} reports of failed test cases. Therefore, the reports contains videos captured during the test runs, screenshots taken in a moment when a test case failed and additional logs. The additional data helps with identification of potential flaws in tests and false-positive results.
 
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=1\textwidth,clip]{obrazky-figures/libreoffice-report.png}
-	\caption{An example of the test report generated by the \textit{behave} framework during the execution of the LibreOffice StartCenter tests}
+	\caption{An example of the test report generated by the \textit{behave} framework during the execution of the tests generated for LibreOffice StartCenter}
 	\label{lo_report_html}
 \end{figure}
 
@@ -671,22 +693,22 @@ Generated \textit{behave} test scenarios are located in the file named \texttt{g
 \chapter{Testing and Results}\label{chapter_4}
 In this chapter, we discuss the results of our test generator. Section \ref{coverage} describes the coverage measurement techniques we obtained for the test cases created by our test generator.  In Sections \ref{terminal} -- \ref{gedit} we present 5 open-source GUI applications as well as the results that were achieved when we tested them with our test generator.
 
-All performed testing was done on virtual machines preloaded with distributions \textit{Red Hat Enterprise Linux 8.2/8.3}. Virtual machines were assigned with 4 GiB of RAM and two logical CPU cores (\textit{Intel(R) Core(TM) i5-9600K CPU @ 3.70GHz}). The execution of the test generator on production workstations should be avoided as the performed actions may potentially lead to alteration of the system or data loss.  This also applies to the generated test cases. 
-
+All performed testing was done on virtual machines preloaded with distributions \textit{Red Hat Enterprise Linux 8.2/8.3}. Virtual machines were assigned with 4 GiB of RAM and two logical CPU cores (\textit{Intel(R) Core(TM) i5-9600K CPU @ 3.70GHz}). The execution of the test generator on production workstations should be avoided as the performed actions may potentially lead to alteration of the system or a data loss. The same approach applies to the generated test cases. 
 
 \section{Coverage Evaluation}\label{coverage}
 This section is dedicated to the coverage measuring techniques that were implemented within our test generator, namely a model coverage and an event coverage. Further, we discuss the code coverage analysis performed with the \verb|gcov| tool.
 
-\paragraph{Event Coverage} The event coverage measures the number of executed events on a tested application during the test generation, it is a common technique used in GUI testing~\cite{NguyenBao2014Gait}. An execution of an event is counted as successful one, if the event was executed by the accessibility layer without any errors. The event coverage approach implemented by our test generator also has a disadvantage. The event coverage report contains only events reported by the accessibility technology, other events like drag and drop, keyboard shortcuts and mouse scrolling are not included.
+\paragraph{Event Coverage} The event coverage measures the number of executed events on a tested application during the test generation. It is a common technique used in GUI testing~\cite{NguyenBao2014Gait}. An execution of an event is counted as successful one, if the event was executed by the accessibility layer without any errors. The event coverage approach implemented by our test generator also has a disadvantage. The event coverage report contains only events reported by the accessibility technology, other events like drag and drop, keyboard shortcuts and mouse scrolling are not included.
 
 \paragraph{Model Coverage} Another coverage measurement performed by our test generator is the model coverage. The coverage is measured as the number of nodes (widgets) involved in test cases from the overall number of nodes included in the model.
 
-As discussed in Section \ref{model}, the model contains only nodes that offer an action that can be executed by users. It is expected that this coverage will always cover 100 \% of the nodes. However, with applications that contain a richer GUI, some of the nodes might be hidden or the generator will not be able to derive an event sequence that will be able to access those nodes. This especially applies to cases when the generator will be used on a new application that contains some special layout or an action on the given node could not be executed by the accessibility technology. In such cases, our generator skips the whole test case, generates an error message, and proceeds to the next test case. 
+As discussed in Section \ref{model}, the model contains only nodes that offer an action that can be executed by users. It is expected that this coverage will always cover 100 \% of the nodes. However, with applications that contain a richer GUI, some of the nodes might be hidden or the generator will not be able to derive an event sequence that will be able to access those nodes. This especially applies to cases when the generator will be used on a new application that contains some special layout or an action on the given node which could not be executed by the accessibility technology. In such cases, our generator skips the whole test case, generates an error message, and proceeds to the next test case. 
 
 Nodes that are not covered by tests, along with event sequences that are involved, are printed in a report after the test generator finishes. The nodes or event sequences reported as failed must be evaluated manually with several possible outcomes:
 
 \begin{enumerate}
-    \item a bug in the tested application,
+    \item a node is not available for interaction
+    \item a bug in a tested application,
     \item a bug in the accessibility technology (e.g. incorrectly reported coordinates),
     \item an imperfection or a bug in the test generator,
     \item the tested application is affected by the previous test case (change in the settings/layout), and additional cleanup must be added to \texttt{apps.yaml}.
@@ -694,7 +716,7 @@ Nodes that are not covered by tests, along with event sequences that are involve
 
 Both the event coverage and the model coverage are evaluated in the end of the test generation process. The measurements are a part of a final test generator report. The report also contains a list of unexecuted event sequences. The list can be used to retest test cases that were not sucessfully tested by our test generator.
 
-\paragraph{Code Coverage} We also obtained code coverage measurements from tests runs generated by our test generator, if possible. The code coverage measurements were obtained with the \verb|gcov| tool that comes as a part of the GNU development tools. The purpose of the tool is to perform the code coverage analysis and to find dead or unexecuted code. Coverage-driven testing can be characterized by the following steps: 
+\paragraph{Code Coverage} We also obtained code coverage measurements from tests runs generated by our test generator. The code coverage measurements were obtained with the \verb|gcov| tool that comes as a part of the GNU development tools. The purpose of the tool is to perform the code coverage analysis and to find dead or unexecuted code. Coverage-driven testing can be characterized by the following steps: 
 \begin{enumerate}
   \item Find the areas of a program not exercised by test suite.
   \item Create additional test cases to exercise so far not exercised code, thereby increasing code coverage.
@@ -706,27 +728,27 @@ To obtain a measurement of the code coverage, it is required to compile the appl
 To obtain measurements, tests must be executed with a custom binary, compiled with the mentioned parameters. Once the custom binary is executed, files with extensions \texttt{.gcda} and \texttt{.gcno} should appear in the directory where the binary is located. Measurements are aggregated throughout the test execution and the code coverage is reported to the special files with the mentioned extensions. Then, the \texttt{lcov} tool is used to aggregate the measurements and generate a report in two steps (Listing \ref{lcov_report}). The first command takes the\texttt{.gcda} and \texttt{.gcno} files and generates a \texttt{.info} file with coverage information. The second command takes the \texttt{info} file and generates a detailed HTML report. The report contains every source file (\texttt{.c} file) along with the percentage of covered functions and lines.
 
 \begin{lstlisting}[language=Gherkin,caption={Shell commands used to generate an HTML report with the \texttt{lcov} tool},label={lcov_report}]
-    lcov -c -d . -o app.info
-    genhtml -o lcov_report -s --legend app.info --ignore-errors
+    $ lcov -c -d . -o app.info
+    $ genhtml -o lcov_report -s --legend app.info --ignore-errors
 \end{lstlisting}
 
 % According to the GTK website\footnote{\url{https://www.gtk.org/}}, the framework supports JavaScript, Python, Rust, Vala, C, and Perl. The \verb|gcov| method of measuring the test coverage is only possible for C and Vala.    
 
 \section{GNOME Terminal}\label{terminal}
 % code coverage, explanation of achieved coverage
-GNOME Terminal (Figure \ref{terminal-gui}) is one of the most important applications from the GNOME application stack. It is also known as \textit{Terminal} and it serves as a terminal emulator for accessing a UNIX shell environment. The application can be used to run programs available on the system\footnote{\url{https://help.gnome.org/users/gnome-terminal/stable/introduction.html.en}}. 
+GNOME Terminal (Figure \ref{terminal-gui}) is one of the most important applications from the GNOME application stack. The application serves as a terminal emulator for accessing a UNIX shell environment. The application can be used to run programs available on the system\footnote{\url{https://help.gnome.org/users/gnome-terminal/stable/introduction.html.en}}. 
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.65\textwidth,clip]{obrazky-figures/gnome-terminal-ui.png}
+	\includegraphics[width=0.7\textwidth,clip]{obrazky-figures/gnome-terminal-ui.png}
 	\caption{GNOME Terminal application UI}
 	\label{terminal-gui}
 \end{figure}
 
 \subsection*{Setup and Cleanup}
-A large part of test cases generated for GNOME Terminal performs some changes of settings either via the \textit{Preferences} dialog or through menus located at the top of the window. Preferences can change various aspects of the application, including the text encoding, layout of widgets, and color schemes. Those changes need to be set back to default values to make sure that test cases will not affect subsequent test cases. In \textit{Terminal}, this is achieved through 2 cleanup commands (Listing \ref{gnome-terminal-cleanup}) that are executed at the end of every test case. Testing was performed with the rpm package \texttt{gnome-terminal-3.28.3-1.el8.x86\_64}.
+A large part of test cases generated for GNOME Terminal performs some changes of settings either via the \textit{Preferences} dialog or through menus located at the top of the window. Preferences can change various aspects of the application, including the text encoding, layout of widgets, and color schemes. Those changes need to be set back to default values to make sure that test cases will not affect subsequent test cases. In \textit{Terminal}, this is achieved through 2 cleanup commands (see Listing \ref{gnome-terminal-cleanup}) that are executed at the end of every test case. Testing was performed with the rpm package \texttt{gnome-terminal-3.28.3-1.el8.x86\_64}.
 
-\begin{lstlisting}[caption={The cleanup commands required to reset GNOME Terminal to the default settings},label={gnome-terminal-cleanup}]
+\begin{lstlisting}[caption={The cleanup commands required to reset GNOME Terminal to its default settings},label={gnome-terminal-cleanup}]
     dconf reset /org/gtk/Settings/Debug/enable-inspector-keybinding
     dconf reset -f /org/gnome/terminal/legacy/
 \end{lstlisting}
@@ -734,20 +756,18 @@ A large part of test cases generated for GNOME Terminal performs some changes of
 \subsection*{Test Generation and Results}
 Listing \ref{gnome-terminal-report} contains the final test generator report and summarizes the testing performed on \textit{Terminal}. The developed test generator was able to generate 485 test cases while covering 1,700 events in the application. Tests are covering menus, several smaller dialogs, and a \textit{Preferences} window.
 
-\begin{minipage}\linewidth
+
 \begin{lstlisting}[caption={Final test generator report for GNOME Terminal},label={gnome-terminal-report}]
     Test Generator Report for Component: Terminal
-    Covered Events: 1700/1702
+    Covered Events: 1700/1702 (99.88 %)
     Number of Covered Nodes: 516
     Number of Generated Test Cases: 485 
     Nodes without the Coverage:
         Edit:menu:click => Preferences:menu item:click => :list item: 
             => Menu:toggle button:click
-        Help:menu:click => About:menu item:click => :link:Click
     No errors found!
     Generation Time: 1:53:52.676497s
 \end{lstlisting}
-\end{minipage}
 
 % Generated test cases covered 34.2 \% lines of source code and executed 42 \% of functions (Figure \ref{gnome-terminal-coverage}). As described in the report, the coverage resides in the low category. After looking to the report in detail and reading the comments in source code, the analysis has shown that several parts of the GUI are not executed by the tests. The analysis has revealed functions that are handling shortcuts that are not covered in the test cases. It is also expected that a large portion of code is related to non-GUI operations which are not covered in out tests at all.
 
@@ -775,65 +795,61 @@ Listing \ref{gnome-terminal-report} contains the final test generator report and
 % \end{figure}
 
 \section{GNOME Help}\label{}
-GNOME Help (or yelp) is a help viewer for GNOME\footnote{\url{https://wiki.gnome.org/Apps/Yelp}}. The application natively renders documents in various formats including HTML documents. The UI is filled with links to navigate between documents.
+GNOME Help (Yelp) is a help viewer for GNOME\footnote{\url{https://wiki.gnome.org/Apps/Yelp}}. The application natively renders documents in various formats including HTML documents. The UI (see Figure \ref{yelp_ui}) of the application is filled with links to navigate between documents.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.65\textwidth,clip]{obrazky-figures/yelp-ui.png}
+	\includegraphics[width=0.6\textwidth,clip]{obrazky-figures/yelp-ui.png}
 	\caption{GNOME Help (Yelp) application UI}
 	\label{yelp_ui}
 \end{figure}
 
 \subsection*{Test Generation and Results}\label{firefox_bug}
-Listing \ref{yelp-report} contains the final report and summarizes the testing performed on \textit{GNOME Help}. The developed test generator was able to generate 2,415 test cases while covering the 4,690 events in the application. The application did not require any individual setup, the testing was performed with the rpm package \texttt{yelp-3.28.1-3.el8.x86\_64}.
+Listing \ref{yelp-report} contains the final report and summarizes the testing performed on \textit{GNOME Help}. The developed test generator was able to generate 2,412 test cases while covering the 4,690 events in the application. The application did not require any individual setup, the testing was performed with the rpm package \texttt{yelp-3.28.1-3.el8.x86\_64}. 
 
-\begin{minipage}\linewidth
 \begin{lstlisting}[caption={
-Final test generator report for GNOME Help},label={yelp-report}]
+The final test generator report for GNOME Help},label={yelp-report}]
     Test Generator Report for Component: Help
-    Covered Events: 4690/4696
+    Covered Events: 4690/4696 (99.87%)
     Number of Covered Nodes: 2415
     Number of Generated Test Cases: 2412
     Nodes without the Coverage:
     GNOME Help:frame: => Digital cameras:link:jump 
-                => More Information:heading:Click
+        => More Information:heading:Click
     ...
-    GNOME Help:frame: => playing videos:link:jump
-                => More Information:heading:Click 
     Generation Time: 4:57:13.370368s
 \end{lstlisting}
-\end{minipage}
 
-The report also contains 6 failed event sequences. The reason behind these failures is partially the way we implemented our test generator. We introduced the file \texttt{rolenames.py} where we enumerated all role names for nodes without an action. The mentioned failures contain node with the role name \texttt{heading}. Since the majority of headings are assigned with an action called \texttt{jump}, the role name \texttt{heading} is not blacklisted in the file \texttt{rolenames.py}. However, there are nodes with the role name \texttt{heading} that are assigned with an empty action (an empty string). This is how the accessibility system labels links in Help that are not clickable. Our test generator handles a node with an empty action by replacing the empty action with a default one -- Click. Since the default action is not the one assigned to a node, its execution might fail which is what most probably happened in the failed sequences. 
+The report also contains 6 failed event sequences. The reason behind these failures is partially the way we implemented our test generator. As discussed in Section \ref{model}, we introduced the file \texttt{rolenames.py} where we enumerated all role names for nodes without an action. The mentioned failures contain node with the role name \texttt{heading}. Since the majority of headings are assigned with an action called \texttt{jump}, the role name \texttt{heading} is not blacklisted in the file \texttt{rolenames.py}. However, there are nodes with the role name \texttt{heading} that are assigned with an empty action (an empty string). This is how the accessibility system labels links in Help that are not available for interaction. Our test generator handles a node with an empty action by replacing the empty action with a default one -- Click. Since the default action is not the one assigned to a node, its execution might fail which is what most probably happened in the failed event sequences. 
 
-The second part of the report is dedicated to captured error messages. Overall, there were 42 warnings about occurrences of error messages during the test generation along with reproducers. The examination has revealed that error messages were found in test cases where an external link leads to a web page. External links are not handled by the Help application, they are forwarded to a default web browser for the GNOME session. In our case, the default web browser was Firefox. A manual application of reported reproducers has shown, that the captured error messages were not originated from the Help process, but they were generated by the Firefox process. Initially, we were not able to reproduce the issue because the messages did not appear until the Firefox window was closed. To support the claim that the error messages are caused by the bug in Firefox, we successfully reproduced the same issue with the LibreOffice StartCenter, where our test generator found the same error messages in a different test scenario. Our findings were submitted in a bug report \footnote{\url{https://bugzilla.redhat.com/show_bug.cgi?id=1837978}}. 
+The second part of the report is dedicated to captured error messages. Overall, there were 42 warnings about occurrences of error messages during the test generation along with their reproducers. The examination has revealed that error messages were found in test cases where an external link leads to a web page. External links are not handled by the Help application, they are forwarded to a default web browser for the GNOME session. In our case, the default web browser was Firefox. A manual application of reported reproducers has shown, that the captured error messages were not originated from the Help process, but they were generated by the Firefox process. Initially, we were not able to reproduce the issue because the messages did not appear until the Firefox window was closed. To support the claim that the error messages are caused by the bug in Firefox, we successfully reproduced the same issue with the LibreOffice StartCenter, where our test generator found the same error messages in a different test scenario. Our findings were submitted in a bug report\footnote{\url{https://bugzilla.redhat.com/show_bug.cgi?id=1837978}}. 
 
 \begin{figure}[htb!]
 	\centering
 	\includegraphics[width=0.85\textwidth,clip]{obrazky-figures/yelp_n_start.png}
-	\caption{Initial event flow graph of event sequences for GNOME Help}
+	\caption{The initial event flow graph of event sequences for GNOME Help}
 	\label{yelp_start}
 \end{figure}
 
 \begin{figure}[htb!]
 	\centering
 	\includegraphics[width=0.85\textwidth,clip]{obrazky-figures/yelp_n_final.png}
-	\caption{Expanded event flow graph of event sequences for GNOME Help}
+	\caption{The expanded event flow graph of event sequences for GNOME Help}
 	\label{yelp_end}
 \end{figure}
 
 \textit{GNOME HELP} also offered a good demonstration of how nodes are expanded during the test generation. To visualize the node expansion performed by our test generator during the testing, we integrated an automatic generation of event flow graphs implemented by the \texttt{networkx} library written in Python3. An initial graph is generated after the scan of the SUT performed in the beginning of testing. A final graph is generated at the end of the test generation process. All graphs that were generated during the testing with our generator are available in Appendix \ref{event_flow_graphs}.
 
-Initially, the generator scans the tree for the available nodes and builds a model from 78 available nodes (widgets) and derives 96 event sequences (Figure \ref{yelp_start}). The Generator proceeds with the application of event sequences and continuously expands the model to the final number of 2,415 nodes and 4,696 derived test cases (Figure \ref{yelp_end}). When compared to manual testing, the effort required to achieve this coverage would be very tedious and time-consuming. 
+Initially, the generator scans the tree for the available nodes and builds a model from 78 available nodes (widgets) and derives 96 event sequences (Figure \ref{yelp_start}). The Generator proceeds with the application of event sequences and continuously expands the model to the final number of 2,415 nodes and 4,696 event sequences (Figure \ref{yelp_end}). The expanded graph shows which event lead to the discovery of new nodes associated with an action that can be executed by the accessibility system. When compared to manual testing, the effort required to achieve this coverage would be very tedious and time-consuming. 
 
 \section{LibreOffice StartCenter}
 In this section, we describe results achieved by our test generator when we tested LibreOffice applications. Moreover, we discuss the alterations that were required to be implement within our test generator due to issues caused by the accessibility layer. 
-LibreOffice StartCenter (\ref{libreoffice-gui}) is a document management application, it connects 7 other applications from the document suite. Each application can open and edit a different format of documents\footnote{\url{https://help.libreoffice.org/3.3/Common/Start_Center}}. LibreOffice is not a part of the GNOME application stack although it is being shipped as a default document suite in a lot of Linux distributions and has the accessibility support.
+LibreOffice StartCenter (Figure \ref{libreoffice-gui}) is a document management application, it connects 7 other applications from the document suite. Each application can open and edit a different format of documents\footnote{\url{https://help.libreoffice.org/3.3/Common/Start_Center}}. LibreOffice is not a part of the GNOME application stack, although it is being shipped as a default document suite in a lot of Linux distributions and has the required accessibility layer support.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.65\textwidth,clip]{obrazky-figures/libreoffice_GUI.png}
-	\caption{LibreOffice StartCenter}
+	\includegraphics[width=0.7\textwidth,clip]{obrazky-figures/libreoffice_GUI.png}
+	\caption{LibreOffice StartCenter UI}
 	\label{libreoffice-gui}
 \end{figure}
 
@@ -841,21 +857,20 @@ LibreOffice StartCenter (\ref{libreoffice-gui}) is a document management applica
 \subsection*{Required Implementation Changes and Limitations}
 During the testing of LibreOffice StartCenter we encountered issues with LibreOffice Calc which forced us to implement application-specific changes to our test generator. 
 
-Tests generated for LibreOffice StartCenter are executing all applications from the LibreOffice suite. LibreOffice Calc is a spreadsheet editor that contains theoretically an infinite number of editable cells that are created on demand. Therefore, the application cannot be recursively explored for new nodes. A recursive search causes that the application will generate new cells until the RAM on a virtual machine is depleted. The virtual machine is unresponsive and even refuses to execute commands through a remote shell. Therefore, the implementation of the test generator was altered to avoid the execution of a recursive search on LibreOffice Calc.
+Tests generated for LibreOffice StartCenter are executing all applications from the LibreOffice suite. LibreOffice Calc is a spreadsheet editor that contains theoretically an infinite number of editable cells that are created on demand. Therefore, the application cannot be recursively explored for new nodes. A recursive search causes that the application will generate new cells until the RAM on a virtual machine is depleted. The virtual machine is unresponsive and even refuses to execute commands through a remote shell. Therefore, the implementation of the test generator was altered to avoid the execution of recursive search querries on LibreOffice Calc.
 
-Another accessibility-related issue has started to occur when the test generation process reached certain types of dialogs (letter wizard, fax wizard, etc.). The behavior was quite similar to the previous issue, the test generator hanged on a recursive search query for a while and then failed with the error message shown in Listing \ref{error-message}.
+Another accessibility-related issue has started to occur when the test generation process reached certain types of dialogs (a letter wizard, a fax wizard, etc.). The behavior was quite similar to the previous issue, the test generator hanged on a recursive search query for a while and then failed with the error message shown in Listing \ref{error-message}.
 
-\begin{lstlisting}[caption={The error that prevents the generator from node expansion},label={error-message}]
+\begin{lstlisting}[caption={The accessibility layer error that prevents the generator from node expansion when testing LibreOffice StartCenter},label={error-message}]
 Failed to handle new nodes atspi_error:The application no longer exists (0)
 \end{lstlisting}
 
- The investigation has shown the application spawns 2 windows, the first one is the previously mentioned dialog, the second one is a generic LibreOffice window that contains only a blank window with menus. The blank window is probably spawned because those wizard dialogs are not standalone applications, they belong to other applications from the LibreOffice suite. This claim is supported by the fact that the blank window only lasts as long as the dialog is opened. The blank window contains widgets but they are not available for interaction as the focus is only available for the dialog window in the front. Therefore, the blank window is an issue from the implementation perspective of the generator as it tries to perform node expansion on a window that never becomes available. Since the accessibility system throws the mentioned error, it is handled as an exception and the generator continues without expansion of the affected part of the application.
+ The investigation has shown the application spawns 2 windows, the first one is the previously mentioned dialog, the second one is a generic LibreOffice window that contains only menus. The blank window probably spawned because those wizard dialogs are not standalone applications, they belong to other applications from the LibreOffice suite. This claim is supported by the fact that the blank window only lasts as long as the dialog is opened. The blank window contains widgets but they are not available for interaction as the focus can only be placed on the dialog window in the front. Therefore, the blank window is an issue from the implementation perspective of the generator as it tries to perform node expansion on a window that never becomes available. Since the accessibility system throws the mentioned error, it is handled as an exception and the generator continues without expansion to a next test case. The cancellation of the node expansion process also means that widgets from the affected dialog window are not tested by our generator.
 
 \subsection*{Testing and Results}\label{libreoffice-test}
 Testing LibreOffice required some setup in the \texttt{apps.yaml} file. The application instance has to be started with the \texttt{-{}-norestore} parameter to avoid the restoration of unsaved documents from previous sessions. Furthermore, the user configurations files located in \texttt{\textasciitilde/.config/libreoffice/} are removed during the cleanup process. After the previously discussed implementation changes, the generator has been able to perform a full run on the application and produces a test report that is partially shown in Listing \ref{libreoffice-report}. A subset of tests generated for LibreOffice Calc is shown in Appendix \ref{tests_example}.
 
-\begin{minipage}{\linewidth}
-\begin{lstlisting}[caption={Final test generator report for LibreOffice StartCenter},label={libreoffice-report}]
+\begin{lstlisting}[caption={The final test generator report for LibreOffice StartCenter},label={libreoffice-report}, float]
     Test Generator Report for Component: LibreOffice StartCenter
     Covered Events: 7795/7853 (99.26 %) 
     Number of Covered Nodes: 2516
@@ -864,13 +879,12 @@ Testing LibreOffice required some setup in the \texttt{apps.yaml} file. The appl
     ...
     Generation Time: 11:48:49.071478s
 \end{lstlisting}
-\end{minipage}
 
-The report shows that the achieved event coverage was not as successful as with the previous components. The majority of the failed sequences contained nodes that have the action available, but they were not available for interaction at a given time. 
+The report shows that the achieved event coverage was not as successful as with the previous components. The majority of the failed sequences contained nodes that have the action available, but the action could not be executed at a given time. 
 
-The report also contained several crashes and errors, including the Firefox issue mentioned in Subsection \ref{firefox_bug}. One of the crashes was quite severe, the StartCenter crashed after clicking on the Help button. We submitted a bug report\footnote{\url{https://bugzilla.redhat.com/show_bug.cgi?id=1819798}} for the issue and it has been fixed by developers. 
+The report also contained several crashes and errors. A couple of those errors confirmed the Firefox issue mentioned in Subsection \ref{firefox_bug} that we reported. Furthermore, another severe issue was discovered by our solution when the StartCenter crashed after clicking on the Help button. We submitted a bug report\footnote{\url{https://bugzilla.redhat.com/show_bug.cgi?id=1819798}} for the issue and it has been fixed by developers. 
 
-Another group of crashes was caused by quite an interesting phenomenon. The test generator reported 6 crashes that appeared to be quite similar. Each crash was triggered by an event on a button that was not available for an interaction. A manual application of the reproducers was not possible because the event can only be sent through the accessibility system. Nevertheless, this proves that the proposed test generator can reveal this kind of flaws in GUI software.
+The remaining group of crashes was caused by quite an interesting phenomenon. The test generator reported 6 crashes that appeared to be quite similar. Each of those crashes was triggered by an event associated with a button that was not available for an interaction. A manual application of the reproducers was not possible because the event can only be sent through the accessibility system. Nevertheless, this proves that the proposed test generator can reveal this kind of flaws in GUI software. The testing was performed with the \texttt{libreoffice-core-6.3.6.2-1.el8.x86\_64} rpm.
 
 % Despite the fact that node expansion during the generation process was affected by the discussed issues with the accessibility layer, the achieved results are presented in Figures \ref{libreoffice-graph1} and \ref{libreoffice-graph2}.
 
@@ -895,31 +909,36 @@ This section introduces us to a document viewer application Evince\footnote{\url
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.65\textwidth,clip]{obrazky-figures/evince.png}
-	\caption{Evince document viewer GUI}
+	\includegraphics[width=0.7\textwidth,clip]{obrazky-figures/evince.png}
+	\caption{Evince document viewer UI}
 	\label{evince_gui}
 \end{figure}
 
-\subsection*{Testing and Results}
-Initially, we tested a blank Evince instance without a test file. However, results have shown that a lot of widgets are not available, or disabled. Therefore, we decided to add a test file in a \texttt{.pdf} format as shown in Figure~\ref{evince_gui}. A name and a path of the test file is configurable via the \texttt{apps.yaml} file. The test file is used during the test case generation process as well as the test case execution process. An inclusion of the test file have unlocked the majority of disabled widgets and allowed us to use the full potential of our test generator. 
-
-Listing~\ref{evince-report} contains the final test generator report. The report section that starts on line 5 contains a list of enexecuted event sequences. The manual reproduction of sequences has shown that the reported event sequences lead to widgets that were not available for an interaction. In two cases, our test generator crashed the application by executing an action on an unavailable widget through the accessibility layer. This is the same issue that we encountered when we tested LibreOffice StartCenter (see Subsection~\ref{libreoffice-test}).
-
-\begin{minipage}\linewidth
-\begin{lstlisting}[caption={Final test generator report for LibreOffice StartCenter},label={evince-report}]
+\begin{lstlisting}[caption={Final test generator report for Evince},label={evince-report}, float]
 Test Generator Report for Component: Document Viewer
 Covered Events: 373/398 (93.71 %)
 Number of Covered Nodes: 217
 Number of Generated Test Cases: 189
 Nodes without the Coverage:
-    ...
-Generation Time: 11:48:49.071478s
+...
+Generation time: 0:29:20.398814s
 \end{lstlisting}
-\end{minipage}
+\subsection*{Testing and Results}
+Initially, we tested a blank Evince instance without a test file. However, results have shown that a lot of widgets are not available, or are disabled. Therefore, we decided to add a test file in the \texttt{.pdf} format as shown in Figure~\ref{evince_gui}. A name and a path of the test file is configurable via the \texttt{apps.yaml} file. The test file is used during the test case generation process as well as the test case execution process. An inclusion of the test file has unlocked the majority of disabled widgets and allowed us to use the full potential of our test generator.
 
-Our test generator revealed an unknown issue with the \texttt{Gtk-CRITICAL} error message. We were able to report the issue from the reproducer provided by our test generator (see Appendix~\ref{bug}) and we created a bug report\footnote{\url{https://bugzilla.redhat.com/show_bug.cgi?id=1842017}}. The issue occured in a test case when a document is opened in the \textit{Presentation Mode}. The error message is not that severe, however this kind of messages are printed when something critical fails within the application and there are numerous bug reports for the GNOME applications for similar issues. Furthermore, the issues like the one we reported are harder to find, because they occur only we check the \textit{stderr} of a GUI application.
 
-The Since the \textit{RHEL 8.3} distribution contains an older version of the application we tested (\texttt{gedit-3.28.1-3.el8.x86\_64}), we also decided to test a much newer flatpak version of the application (\texttt{org.gnome.Evince, Version:3.36.1}). We repeated the testing on the flatpak, however the issue was not confirmed in the newest version. 
+Listing~\ref{evince-report} contains the final test generator report. The report section that starts on line 5 contains a list of unexecuted event sequences. The manual reproduction of sequences has shown that the reported event sequences lead to widgets that were not available for an interaction. In two cases, our test generator crashed the application by executing an action on an unavailable widget through the accessibility layer. This is the same issue that we encountered when we tested LibreOffice StartCenter (see Subsection~\ref{libreoffice-test}).
+
+\begin{figure}[hb!]
+	\centering
+	\includegraphics[width=0.7\textwidth]{obrazky-figures/gedit.png}
+	\caption{Gedit text editor UI}
+	\label{gedit-ui}
+\end{figure}
+
+Our test generator revealed an unknown issue with the \texttt{Gtk-CRITICAL} error message. We were able to report the issue from the reproducer provided by our test generator (see Appendix~\ref{bug}) and we created a bug report\footnote{\url{https://bugzilla.redhat.com/show_bug.cgi?id=1842017}}. The issue occurs in a test case when a document is being opened in the \textit{Presentation Mode}. The error message is not that severe, however this kind of messages are printed when a critical failure occurs within the application and there are numerous bug reports for the GNOME applications for similar issues. Furthermore, the issues like the one we reported are harder to find, because they can be only detected by checking the \textit{stderr} of a GUI application.
+
+Since the \textit{RHEL 8.3} distribution contains an older version of the application that we tested (\texttt{gedit-3.28.1-3.el8.x86\_64}), we also decided to test a newer flatpak version of the application (\texttt{org.gnome.Evince, Version:3.36.1}). The testing was performed without confirmation of the bug in the newest version. By testing the flatpak version of Evince we confirmed the compatibility of our test generator with flatpak applications.  
 
 % \begin{figure}[H]
 % 	\centering
@@ -937,32 +956,31 @@ The Since the \textit{RHEL 8.3} distribution contains an older version of the ap
 
 
 \section{Gedit}\label{gedit}
-This section presents the result achieved with our test generator when testing Gedit application \ref{gedit-ui}, which is a text editor of the GNOME desktop environment\footnote{\url{https://wiki.gnome.org/Apps/Gedit}}. 
+This section presents the results achieved with our test generator when testing Gedit application (see Figure \ref{gedit-ui}), which is a text editor of the GNOME desktop environment\footnote{\url{https://wiki.gnome.org/Apps/Gedit}}. 
 
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.65\textwidth]{obrazky-figures/gedit.png}
-	\caption{Gedit text editor UI}
-	\label{gedit-ui}
-\end{figure}
 
 \subsection*{Testing and Results}
-After the issues we experienced with testing \textit{Evince} without a test file, we included one for \textit{Gedit} tests from the beginning. The achieved results are summarized in the final test generator report shown in Listing \ref{gedit-report}. The report contains a lot of unexecuted event sequences that are not displayed in the listing. The issues were quite similar to issues that occured with applications we tested before. Our generator failed to derive an event sequence for a group of widgets in a \textit{Print} dialog and a \textit{Preferences} dialog.
+After the issues we experienced with testing Evince without a test file, we included one for Gedit tests from the beginning. The achieved results are summarized in the final test generator report shown in Listing \ref{gedit-report}. The report contains a lot of unexecuted event sequences that are not displayed in the listing. The issues were quite similar to issues that occured with applications we tested before. Our generator failed to derive an event sequence for a group of widgets in a \textit{Print} dialog and a \textit{Preferences} dialog.
 
-\begin{minipage}\linewidth
-\begin{lstlisting}[caption={Final test generator report for Gedit},label={gedit-report}]
+
+Furthermore, the report contained 9 occurrences of the \texttt{Gtk-CRITICAL} error. However, when we applied reproducers from the report manually, the errors did not appear. The errors could only be achieved by execution of actions through the accessibility system. During the investigation, we found out that all 9 test cases have one common denominator, which is a so-called \textit{hamburger menu} shown in Figure \ref{gedit-ui}. We examined the menu through the \textit{Sniff} utility to discover that the accessibility system reports a wrong hierarchy of widgets associated with this menu. The menu button is in this case an end node, which means that this is where the event sequence derived for the menu ends. Since the group of widgets associated with this menu is reported by the accessibility layer on a wrong place, our test generator derives a group of event sequences for them without an important middle step -- opening a menu. Therefore, the reported errors are not bugs, as the generator triggers an event on a node which is not present on the screen. In conclusion, this is another discovered imperfection of the accessibility system.
+
+% We have also tested a flatpak version of the application (\texttt{org.gnome.gedit, Version:3.36.2}) with similar results.
+
+\begin{lstlisting}[caption={The final test generator report for Gedit},label={gedit-report}]
 Test Generator Report for Component: Text Editor
 Covered Events: 1200/1301 (92.23 %)
 Number of Covered Nodes: 643
 Number of Generated Test Cases: 565
 Nodes without the coverage:
 ...
-No errors found!
 Generation time: 2:48:58.877205
 \end{lstlisting}
-\end{minipage}
 
-Furthermore, the report contained 9 occurrence of the \texttt{Gtk-CRITICAL} error. However, when we applied reproducers from the report manually, the errors did not appear. The errors could only be achieved by execution of actions through the accessibility system. All 9 test cases have one thing in common and that is a so-called \textit{hamburger menu} shown in Figure \ref{gedit-ui}. We examined the menu through the \textit{Sniff} utility to discover that the accessibility system reports a wrong hierarchy of widgets associated with this menu. The menu button is in this case an end node, which means that this is where test cases generated for the menu ends. Since the group of widgets associated with this menu is reported by the accessibility layer on a wrong place, our test generator derives a group of event sequences for them without an important middle step -- opening a menu. Therefore, the reported errors are not bugs as the generator triggers and event on a node which is not present on the screen. In conclusion, this is another discovered imperfection of the accessibility system. 
+
+
+
+
 
 % \begin{figure}[H]
 % 	\centering
@@ -983,12 +1001,12 @@ Furthermore, the report contained 9 occurrence of the \texttt{Gtk-CRITICAL} erro
 \chapter{Evaluation and Future Work}\label{comparison}
 This chapter presents an overall evaluation of our test generator. Section \ref{code_coverage_evaluation} discusses the results of a code coverage analysis. In Section \ref{comparison}, we compare the proposed test generator to existing test suites for the GNOME aplications. Section \ref{future_work} describes a recommended workflow for our test generator and concludes this chapter with plans for a future work. 
 
-As discussed in Chapter \ref{proposed_solution}, the approach to application testing done by this work combines several testing techniques and takes advantage of existing testing frameworks and libraries. We are not aware of any currently available solutions designed to generate test cases from the AT-SPI metadata in the GNOME environment. The closest related solutions were described in Section \ref{TEMA_TOOLSET}. However, that solution is designed for applications with different development cycles, where a model is being developed before a prototype of the application is available. Other solutions (e.g. references \cite{ReisJacinto2018Aetw},\cite{ArltS2012LSAf}) rely on static analysis and build a model from the byte code of the GUI applications written in Java.
+As discussed in Chapter \ref{proposed_solution}, the approach to application testing done by this work combines several testing techniques and takes advantage of existing testing frameworks and libraries. We are not aware of any currently available solutions designed to generate test cases from the AT-SPI metadata in the GNOME environment. The closest related solutions were described in Subsection \ref{TEMA_TOOLSET}. However, that solution is designed for applications with different development cycles, where a model is being developed before a prototype of the application is available. Other solutions (e.g. references \cite{ReisJacinto2018Aetw},\cite{ArltS2012LSAf}) rely on static analysis and build a model from the byte code of the GUI applications written in Java.
 
 \section{Code Coverage Evaluation}\label{code_coverage_evaluation}
 In this section, we compare our test generator to another GUI test generator based on static analysis. Further, we compare the tests generated by our test generator to the tests written with the script based tools. 
 
-Our test generation tool works on black-box testing principles. However, we were able to perform a code coverage analysis for \textit{evince}, \textit{gedit}, and \textit{gnome-terminal} to evaluate the amount of source code covered by our solution.  To put the results of our code coverage analysis in perspective with similar tools, we compared our results to results acquired by a solution introduced by Artl et al.~\cite{ArltS2012LSAf}. However, their solution targets a different platform and it also takes advantage of white-box testing principles.
+Our test generation tool works on black-box testing principles. However, we were able to perform a code coverage analysis for \textit{Evince}, \textit{Gedit}, and \textit{Terminal} to evaluate the amount of source code covered by our solution.  To put the results of our code coverage analysis in perspective with similar tools, we compared our results to results acquired by a solution introduced by Artl et al.~\cite{ArltS2012LSAf}. However, their solution targets a different platform and it also takes advantage of white-box testing principles.
 Table \ref{table} compares the amount of coverage achieved by our test generator with a range of coverage acquired by their solution on 4 open-source applications written in Java. The code coverage achieved with our test generator did not reach the same results, however there are several factors that must be considered in evaluation. 
 
 \begin{table}[htb!]
@@ -998,7 +1016,7 @@ Table \ref{table} compares the amount of coverage achieved by our test generator
 \hline
  & \multicolumn{3}{c|}{\textbf{Our Solution}} & \textbf{Solution}\cite{ArltS2012LSAf} \\
 \hline
-\textbf{Application} &  evince & gedit & gnome-terminal & Selected Java Applications   \\
+\textbf{Application} &  Evince & Gedit & Terminal & Selected Java Applications   \\
 \hline
 \hline
 Lines Coverage (\%) & 22.4  & 37.2  & 33.2   & 54-62    \\
@@ -1011,18 +1029,18 @@ Branches Coverage (\%) & 16.0 & 23.7 & 20.8 & 26-37  \\
 \caption{Coverage results achieved with our test generator based on AT-SPI metadata (black-box approach) compared to the test generation tool\cite{ArltS2012LSAf} with a white-box approach}
 \end{table}
 
-The analysis performed on the tests generated for \textit{gnome-terminal} has shown that several parts of the GUI code were not executed by the tests. A \textit{gcov} code coverage report provides a detailed analysis of source code. An examination of data provided by the analysis identified a set of functions designed to handle shortcuts that are not covered by our tests. It is also expected that a large portion of source code is related to non-GUI operations which are not covered by our test cases at all.
+The analysis performed on the tests generated for \textit{Terminal} has shown that several parts of the GUI code were not executed by the tests. A \textit{gcov} code coverage report provides a detailed analysis of source code. An examination of data provided by the analysis identified a set of functions designed to handle keyboard shortcuts that are not covered by our tests. It is also expected that a large portion of source code is related to non-GUI operations which are not covered by our test cases at all.
 
-Furthermore, we performed the code coverage analysis of tests generated for \textit{evince} twice. Our findings have shown, that by including a \texttt {.pdf} test file we raised \textit{lines coverage} in \textit{evince} by 11.4 \%, \textit{functions coverage} by 15.6 \%, and \textit{branches coverage} by \textit{5.9} \%.  With consideration that \textit{evince} supports 8 other document formats, we could possibly grow the code coverage by including more test files. The similar approach may be applied in \textit{gedit} as it supports syntax highlighting for various programming languages.
+Furthermore, we performed the code coverage analysis of tests generated for \textit{Evince} twice. Our findings have shown, that by including a \texttt {.pdf} test file, we raised \textit{lines coverage} in \textit{Evince} by 11.4 \%, \textit{functions coverage} by 15.6 \%, and \textit{branches coverage} by \textit{5.9} \%.  With consideration that \textit{Evince} supports 8 other document formats, we could possibly grow the code coverage by including more test files. The similar approach may be applied in \textit{Gedit} as it supports syntax highlighting for various programming languages.
 
 \section{Comparison with Existing Solutions and Test Suites}\label{comparison_with_existing_tools}
 When it comes to solutions used for test automation for GNOME applications, several Record-and-Replay tools were described in Section \ref{record_replay}. The proposed solution utilizes \textit{dogtail} combined with the \textit{behave} framework, so the generated test cases are executable even after the generation process is finished.
 
-Scripted test cases are written by humans (quality engineers). Their goal is either to automate scenarios that cover key features in applications or to create scenarios based on previously discovered bugs and defects. However, the proposed test generator is a semi-smart tool. Errors and crashes that occur during the generation process are recognized and reported with a reproducer. The potential problem is with the semantics of the test cases. The test generator can apply a sequence of actions to the application, although it cannot decide whether the outcome is expected. Therefore, the proposed tool should aid testers with development of test automation right after the executable version of an application is available. The main advantage is in the exploratory testing performed during the test generation. The test generator can sequentially execute available events (event sequences) and possibly help testers to avoid drawbacks of manual testing. A report from the test generation process will also point out the widgets that were not covered by the exploratory testing and therefore they are not covered by the test cases. An additional benefit is provided by the fairly quick availability of the working test automation. Testers can push either all or a subset of test cases in the CI environment. Any test case can be reviewed and updated, new test cases could be written with available \textit{behave} steps or a new step definition can be added. Generated test cases can be merged with test automation available from the previous versions, if it is not too obsolete.
+Scripted test cases are written by humans (quality engineers). Their goal is either to automate scenarios that cover key features in applications or to create scenarios based on previously discovered bugs and defects. However, the proposed test generator is a semi-smart tool. Errors and crashes that occur during the generation process are recognized and reported with a reproducer. The potential problem is with the semantics of the test cases. The test generator can apply a sequence of actions to the application, although it cannot decide whether the outcome is expected. Therefore, the proposed tool should aid testers with development of test automation right after the executable version of an application is available. The main advantage is in the exploratory testing performed during the test generation. The test generator can sequentially execute available events (event sequences), detect errors and crashes, and thus help testers to avoid drawbacks of manual testing. A report from the test generation process will also point out the widgets that were not covered by the exploratory testing and therefore they are not covered by the test cases. An additional benefit is provided by the fairly quick availability of the working test automation. Testers can push either all or a subset of test cases in the CI environment. Any test case can be reviewed and updated, new test cases could be written with available \textit{behave} steps or a new step definition can be added. Generated test cases can be merged with test automation available from the previous versions, if it is not too obsolete.
 
 In conclusion, generated test cases are not comparable with the currently available test automation developed by testers with the script-based tools. The goal of generated test cases is to cover as many events in applications as possible, whereas the currently available test suites are focused on automation of the most essential tasks performed by users in which bugs and defects occurred in the past. This comparison does not include unit tests or any other white-box tests performed on the library level.
 
-The test generator itself is a piece of software as well. It is designed to work with as many applications as possible, therefore, the implementation is as general as possible. If a tested application reveals flaws within the test generator, the fixes must maintain the approach that the implementation has to be as general as possible, thus they will not affect the generation process for other applications. Therefore, if the fix is too application-specific, the effort that needs to be done to include the fix in the test generator should not be greater than developing a custom test case.
+The test generator itself is a piece of software as well. It is designed to work with as many applications as possible, therefore, the implementation is as general as possible. If a tested application reveals flaws within the test generator, the adjustments must maintain the general approach to ensure that the generation process for other applications will not be affected. Therefore, if the adjustment is too application-specific, the effort that needs to be done to include the adjustment in the test generator should not be greater than developing a custom test case.
 
 \section{Recommended Usage and Future Work}\label{future_work}
 In Chapter \ref{proposed_solution}, we introduced a recommended workflow with our test generator (Figure \ref{Diagram}). The workflow contains a review of generated test cases that could be in some cases as time consuming as manual testing. When we tested LibreOffice StartCenter or GNOME Help, the amount of time required for test generation went up to 12 hours. 
@@ -1033,11 +1051,11 @@ Furthermore, another option could be implemented to restrict the depth of execut
 
 Lastly, we could narrow an amount of generated test cases by definition of a window, a dialog, or a menu we want to test. The implementation of this feature would require us to handle an additional input, specifically a \textit{name} and a \textit{roleName} of a widget as well as an event sequence that is required to navigate to the widget.
 
-\chapter{Conclusion}
+\chapter{Conclusion}\label{conclusion}
 
 In this thesis, we presented our test generator for GNOME GUI applications. The generator utilizes the metadata of accessibility technologies to create an abstract model of an application. The model is then used for identification of event sequences that are executed on a tested application. The extracted event sequences are applied on a live instance of the tested application. The state of the application is monitored for severe issues that could appear during the interaction with the application. Additionally, the generator can discover widgets that appear during the testing and include them to the model. The generator also creates additional assertions based on metadata from the accessibility layer as well as assertions that are performed by the OCR engine \textit{Tesseract}. The event sequences along with assertions are put together in a set of executable test cases written in a \textit{behave} framework. The generated test cases are suitable for regression testing performed by the CI pipeline.  
 
-Futhermore, we used our solution to test 5 GNOME GUI applications. The testing performed with our test generator has proven the ability to identify unknown bugs in multiple applications which were reported to developers. We also performed test runs with a selected group of generated tests (\textit{shallow} tests) in the \textit{Desktop-CI} environment in RedHat.
+Futhermore, we used our solution to test 5 GNOME GUI applications. The testing performed with our test generator has proven the ability to identify unknown bugs in multiple applications which were reported to developers. We also verified the deployment of the tests generated by our solution by performing several successful test runs with a selected group of tests (\textit{shallow} tests) in the \textit{Desktop-CI} environment used by Red Hat.
 
 We have also discussed the limitations caused by the accessibility layer that we encountered during the testing. These limitations partially changed our approach to keep the implementation as general as possible and forced us to integrate some application-specific changes in our solution.
 

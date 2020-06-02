@@ -130,8 +130,8 @@
 \lstset{
   frame=tb,
   numbers=left,
-  aboveskip=20pt,
-  belowskip=10pt
+  aboveskip=15pt,
+  belowskip=5pt
 }
 \renewcommand\lstlistingname{Listing}
 \renewcommand\lstlistlistingname{Listing}
@@ -207,9 +207,9 @@
   keywords.en={GUI testing, GNOME, AT-SPI, MBT, open-source application testing, test generation, accessibility technologies, model based testing, black-box testing}, % klíčová slova v anglickém jazyce / keywords in english
   %keywords.en={Here, individual keywords separated by commas will be written in English.},
   % Abstrakt / Abstract
-  abstract.cs={Cieľom tejto práce je vývoj nástroja na automatické generovanie testov pre aplikácie v~prostredí GNOME. Na generovanie testov sú použité metadáta asistenčných technológií. Navrhnutý generátor testov využíva dané metadáta na vytvorenie modelu testovanej aplikácie. Model mapuje sekvencie udalostí, ktoré generátor vykoná na testovanej aplikácii počas generovania testov. Súčasťou procesu generovania je zároveň detekcia závažných chýb v testovaných aplikáciách. Výstupom procesu generovania sú automatizované testy, ktoré sú vhodné na regresné testovanie. Funkčnosť implementovaného generátora testov bola úspešne overená testovaním 5 aplikácií s otvoreným zdrojovým kódom. Testovanie naším nástrojom viedlo k nájdeniu nových chýb v testovaných aplikáciách. },
+abstract.cs={Cieľom tejto práce je vývoj nástroja na automatické generovanie testov pre aplikácie s grafickým užívateľským rozhraním v~prostredí GNOME. Na generovanie testov sú použité metadáta asistenčných technológií, konrétne AT-SPI. Navrhnutý generátor testov využíva dané metadáta na vytvorenie modelu testovanej aplikácie. Model mapuje sekvencie udalostí, ktoré generátor vykoná na testovanej aplikácii počas generovania testov. Súčasťou procesu generovania je zároveň detekcia závažných chýb v testovaných aplikáciách. Výstupom procesu generovania sú automatizované testy, ktoré sú vhodné na regresné testovanie. Funkčnosť implementovaného generátora testov bola úspešne overená testovaním 5 aplikácií s otvoreným zdrojovým kódom. Počas testovania aplikácií navrhnutým nástrojom sa preukázala schopnosť detekovať nové chyby. },
   % abstrakt v českém či slovenském jazyce / abstract in czech or slovak language
-  abstract.en={The goal of this work is the development of a tool capable of automatic test generation for applications in the GNOME desktop environment. Tests are generated using metadata provided by assistive technologies. The proposed test generator utilizes the given metadata to create a model of a tested application. The model maps the event sequences that are applied on the tested application during the test generation process. A part of the generaction process is a detection of severe bugs in the tested applications. The results of the test generation process are automated test cases suitable for regression testing. The functionality of the implemented test generator was sucessfully verified by testing 5 open-source applications. Testing perfomed with our tool revealed several new bugs in the tested applications. },
+abstract.en={The goal of this work is the development of a tool capable of automatic test generation for GUI applications in the GNOME desktop environment. The tests are generated using metadata provided by the assistive technologies, specifically the AT-SPI. The proposed test generator utilizes the given metadata to create a model of a tested application. The model maps the event sequences that are applied on the tested application during the test generation process. A part of the generation process is a detection of severe bugs in the tested applications. The results of the test generation process are automated test cases suitable for regression testing. The functionality of the implemented test generator was successfully verified by testing 5 open-source applications. The testing of applications performed by the proposed tool has proven the ability to reveal new bugs. },
   % abstrakt v anglickém jazyce / abstract in english
 %   abstract.en={An abstract of the work in English will be written in this paragraph.},
   % Prohlášení (u anglicky psané práce anglicky, u slovensky psané práce slovensky) / Declaration (for thesis in english should be in english)
@@ -220,15 +220,26 @@
 % The supplementary information was provided by Mr. Y
 I have listed all the literary sources, publications and other sources, which were used during the preparation of this thesis.},
   % Poděkování (nepovinné, nejlépe v jazyce práce) / Acknowledgement (optional, ideally in the language of the thesis)
-  acknowledgment={ },
+  acknowledgment={I would like to thank prof.\ Ing.\ Tomáš Vojnar for the guidance provided during the writing of this thesis. My thanks also belongs to Ing.\ Tomáš Pelka and the DesktopQE team from Red Hat for helpfull discussions and feedback dedicated to the implementatation of this work. At last I would like to thank my friends and my family for their support during my studies.},
 % V této sekci je možno uvést poděkování vedoucímu práce a těm, kteří poskytli odbornou pomoc
 % (externí zadavatel, konzultant apod.).},
   %acknowledgment={Here it is possible to express thanks to the supervisor and to the people which provided professional help
 %(external submitter, consultant, etc.).},
   % Rozšířený abstrakt (cca 3 normostrany) - lze definovat zde nebo níže / Extended abstract (approximately 3 standard pages) - can be defined here or below
   extendedabstract={
+  V dnešnej dobe väčšina sofvérových aplikácií využíva grafické užívateľké rozhranie (GUI).
+  Rozhranie využíva výhody grafického akcelerátora v počítači na zjednodušenie používania softvéru. GUI applikácie sú vyvíjané pomocou okien a ovládacích prvkov. Ovládací prvok reprezentuje grafický element popisujúci určité správanie alebo funkcionalitu. Interakcia používateľa s ovládacími prvkami generuje rôzne udalosti umožňujúce vykonávať úlohy viacerými spôsobmi.
+  
+  Aj napriek tomu, že grafické užívateľské rozhrania zlepšujú použiteľnosť a flexibilitu, takisto predstavujú výzvu v testovaní softvéru, keďže testeri musia rozhodnúť, či skontrolujú všetky sekvencie udalostí, alebo len ich časť. Úsilie vynaložené na testovavanie GUI aplikácií môže byť zmiernené automatizovaným testovaním softvéru. Aj keď sa za poslednú dekádu nástroje na automatizovné testovanie zlepšili, manuálne testovanie je stále najpoužívanejšou technikou v praxi. Automatizovaný proces testovania GUI aplikácií zabezpečí, že aplikácie budú testované pravidelne a zrýchly sa nájdenie možných chýb. Automatizácia a CI-CD systémy hrajú kľúčovú rolu v regresnom testovaní a to hlavne počas fázy vývoja, keď sa softvér mení častejšie. 
+  
+  Testovanie GUI sofvéru zahŕňa vykonanie udalostí patriacich jednotlivým komponentám GUI a monitorovanie zmien stavu programu. Testy navrhnuté pre GUI sa skladajú zo sekvencií udalostí na vstupe a kontroly zmien stavu programu. Kontrolovať je možné niekoľko indikátorov ako stav GUI, stav pamäte, chybové hlásenia, výstupy aplikácie, alebo akýkoľvek iný indikátor stavu behu programu. GUI testy konktrolujú oveľa viac ako len zdrojový kód súvisiaci len s GUI, keďže vykonané udalosti testujú aj časť zdrojových kódov patriacich mimo GUI. V prípadoch kedy aplikácia nedisponuje iným ako GUI rozhraním je testovanie pomocou GUI rozhrania jedinou možnou formou testovania aplikácie. Z týchto dôvodov je testovanie GUI kritickou súčasťou pre vývoj akéhokoľvek sofvéru s GUI. 
   
   
+  Veľkosť a zložitosť moderných grafických užívateľských rozhraní v počte komponent a udalostí, ktoré možu na nich byť vykonané, presahujú praktické limity analytických prístupov k testovaniu. Počet možných testov pre GUI sa zvyšuje exponenciálne s počtom udalostí a komponent v GUI aplikácii. 
+  
+  V tejto práci prezentujeme naše riešenie navrhnuté pre automatické generovanie testov pre GUI aplikácie v prostredí GNOME. Generátor využíva metadáta asistečných technológií na vytvorenie modelu, z ktorého sú testy odvodené. Generátor extrahuje z vytvoreného modelu sekvencie udalostí, ktoré je možné na testovanej aplikácii vykonať. Generovanie testov prebieha sekvenčným aplikovaním udalostí na testovanú aplikáciu. Udalosti sú vykonávané pomocou assistečných technológií, ktoré sú taktiež používané na monitorovanie stavu aplikácie, ako aj rozširovanie modelu o novo nájdené stavy v aplikácii počas testovania. Počas generovania testov je zároveň aplikácia monitorovaná kvôli detekcii závažných chýb, ktoré je generátor schopný identifikovať. Navrhnutý nástroj taktiež integruje technológiu OCR, ktorá umožňuje čítanie textu z obrázkov. Táto technológia umožňuje dodatočnú kontrolu stavu testovanej aplikácie. 
+  
+  Implementovaným nástrojom sme otestovali 5 aplikácií. Počas testovania sme dokázali overiť funkcionalitu nami navrhnutého generátora testov, ktorý bol schopný odhaliť niekoľko nových chýb v testovaných aplikáciách. Práca zároveň dokumentuje aj obmedzenia a nedostatky, ktoré sa objavili pri testovaní pomocou navrhnutého nástroja. Testy vygenerované našim nástrojom sú vhodné na automatizované testovanie a boli nasadené v prostredí \textit{Desktop-CI} používanom firmou Red Hat.
   },
   %faculty={FIT}, % FIT/FEKT/FSI/FA/FCH/FP/FAST/FAVU/USI/DEF
   faculty.cs={Fakulta informačních technologií}, % Fakulta v češtině - pro využití této položky výše zvolte fakultu DEF / Faculty in Czech - for use of this entry select DEF above
