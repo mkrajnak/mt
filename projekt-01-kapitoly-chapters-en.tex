@@ -1014,7 +1014,7 @@ Table \ref{table} compares the amount of coverage achieved by our test generator
 \label{table}
 \begin{tabular}{|c||c|c|c|c|}
 \hline
- & \multicolumn{3}{c|}{\textbf{Our Solution}} & \textbf{Solution}\cite{ArltS2012LSAf} \\
+ & \multicolumn{3}{c|}{\textbf{Our Solution}} & \textbf{Solution} \cite{ArltS2012LSAf} \\
 \hline
 \textbf{Application} &  Evince & Gedit & Terminal & Selected Java Applications   \\
 \hline
@@ -1026,7 +1026,7 @@ Functions Coverage (\%) & 33.6 & 46 & 41.0  &  --- \\
 Branches Coverage (\%) & 16.0 & 23.7 & 20.8 & 26-37  \\
 \hline
 \end{tabular}
-\caption{Coverage results achieved with our test generator based on AT-SPI metadata (black-box approach) compared to the test generation tool\cite{ArltS2012LSAf} with a white-box approach}
+\caption{Coverage results achieved with our test generator based on AT-SPI metadata (black-box approach) compared to the test generation tool \cite{ArltS2012LSAf} with a white-box approach}
 \end{table}
 
 The analysis performed on the tests generated for \textit{Terminal} has shown that several parts of the GUI code were not executed by the tests. A \textit{gcov} code coverage report provides a detailed analysis of source code. An examination of data provided by the analysis identified a set of functions designed to handle keyboard shortcuts that are not covered by our tests. It is also expected that a large portion of source code is related to non-GUI operations which are not covered by our test cases at all.
